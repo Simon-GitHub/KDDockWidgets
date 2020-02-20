@@ -30,6 +30,8 @@
 
 #include "docks_export.h"
 
+#include "KDDockWidgets.h"
+
 QT_BEGIN_NAMESPACE
 class QByteArray;
 QT_END_NAMESPACE
@@ -42,7 +44,7 @@ class DOCKS_EXPORT LayoutSaver
 {
 public:
     ///@brief Constructor. Construction on the stack is suggested.
-    LayoutSaver();
+    explicit LayoutSaver(RestoreOptions options = RestoreOption_None);
 
     ///@brief Destructor.
     ~LayoutSaver();
@@ -81,7 +83,7 @@ public:
      *
      * @return true on success
      */
-    bool restoreLayout(const QByteArray &);
+    bool restoreLayout(const QByteArray &, RestoreOptions options = RestoreOption_None);
 
     /**
      * @brief returns a list of dock widgets which were restored since the last
@@ -101,6 +103,7 @@ public:
     struct Anchor;
     struct Frame;
     struct Placeholder;
+    struct ScalingInfo;
     struct ScreenInfo;
 
 private:
