@@ -29,7 +29,6 @@
 #include "Config.h"
 #include "Separator_p.h"
 #include "FrameworkWidgetFactory.h"
-#include "LayoutSaver.h"
 #include "AnchorGroup_p.h"
 
 #include <QAction>
@@ -43,6 +42,12 @@
 
 using namespace KDDockWidgets;
 
+
+MultiSplitterLayout::MultiSplitterLayout(MultiSplitter *ms)
+    : m_multiSplitter(ms)
+{
+
+}
 
 const ItemList MultiSplitterLayout::items() const
 {

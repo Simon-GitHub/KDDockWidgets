@@ -20,7 +20,7 @@ set(DOCKSLIBS_SRCS
     DockWidgetBase.cpp
     MainWindow.cpp
     MainWindowBase.cpp
-    # LayoutSaver.cpp
+    LayoutSaver.cpp
     private/LastPosition.cpp
     private/ObjectViewer.cpp
     private/DropIndicatorOverlayInterface.cpp

@@ -235,8 +235,8 @@ bool LayoutSaver::restoreLayout(const QByteArray &data)
             // (Using RAII to make sure it runs after Private::RAIIIsRestoring went out of scope, since "isRestoring= true" inhibits relayout
             if (ensure) {
                 for (auto layout : DockRegistry::self()->layouts()) {
-                    if (layoutSaver->d->matchesAffinity(layout->affinityName()))
-                        layout->redistributeSpace();
+                    /*if (layoutSaver->d->matchesAffinity(layout->affinityName()))
+                        layout->redistributeSpace(); TODO */
                 }
             }
         }

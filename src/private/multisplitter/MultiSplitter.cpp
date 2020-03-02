@@ -32,7 +32,7 @@
 #include "Logging_p.h"
 #include "MainWindowBase.h"
 #include "FloatingWindow_p.h"
-#include "LayoutSaver.h"
+// #include "LayoutSaver.h"
 
 #include <QScopedValueRollback>
 
@@ -75,10 +75,10 @@ bool MultiSplitter::onResize(QSize newSize)
 
     QScopedValueRollback<bool>(m_inResizeEvent, true); // to avoid re-entrancy
 
-    if (!LayoutSaver::restoreInProgress()) {
+   /* if (!LayoutSaver::restoreInProgress()) {
         // don't resize anything while we're restoring the layout
         m_layout->setSize(newSize);
-    }
+    } TODO*/
 
     return false; // So QWidget::resizeEvent is called
 }

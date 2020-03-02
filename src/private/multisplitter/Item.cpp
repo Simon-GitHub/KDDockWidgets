@@ -45,7 +45,22 @@ public:
 };
 
 
+Item::~Item()
+{
+
+}
+
 Frame *Item::frame() const
 {
     return nullptr;
+}
+
+void Item::ref()
+{
+
+}
+
+void Item::unref()
+{
+
 }

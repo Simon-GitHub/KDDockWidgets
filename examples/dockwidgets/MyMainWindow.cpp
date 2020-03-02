@@ -21,7 +21,7 @@
 #include "MyMainWindow.h"
 #include "MyWidget.h"
 
-#include <kddockwidgets/LayoutSaver.h>
+//#include <kddockwidgets/LayoutSaver.h>
 
 #include <QMenu>
 #include <QMenuBar>
@@ -80,19 +80,19 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
 
     auto saveLayoutAction = fileMenu->addAction(QStringLiteral("Save Layout"));
     connect(saveLayoutAction, &QAction::triggered, this, [] {
-        KDDockWidgets::LayoutSaver saver;
+        /*KDDockWidgets::LayoutSaver saver;
         const bool result = saver.saveToFile(QStringLiteral("mylayout.json"));
-        qDebug() << "Saving layout to disk. Result=" << result;
+        qDebug() << "Saving layout to disk. Result=" << result; TODO*/
     });
 
     auto restoreLayoutAction = fileMenu->addAction(QStringLiteral("Restore Layout"));
     connect(restoreLayoutAction, &QAction::triggered, this, [this] {
-        KDDockWidgets::RestoreOptions options = KDDockWidgets::RestoreOption_None;
+       /* KDDockWidgets::RestoreOptions options = KDDockWidgets::RestoreOption_None;
         if (m_restoreIsRelative)
             options |= KDDockWidgets::RestoreOption_RelativeToMainWindow;
 
         KDDockWidgets::LayoutSaver saver(options);
-        saver.restoreFromFile(QStringLiteral("mylayout.json"));
+        saver.restoreFromFile(QStringLiteral("mylayout.json")); TODO */
     });
 
     auto closeAllAction = fileMenu->addAction(QStringLiteral("Close all"));
