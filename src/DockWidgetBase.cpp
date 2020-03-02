@@ -521,13 +521,13 @@ void DockWidgetBase::Private::restoreToPreviousPosition()
         return;
     }
 
-    m_lastPosition.layoutItem()->restorePlaceholder(q, m_lastPosition.m_tabIndex);
+    // TODOm_lastPosition.layoutItem()->restorePlaceholder(q, m_lastPosition.m_tabIndex);
 }
 
 void DockWidgetBase::Private::maybeRestoreToPreviousPosition()
 {
     // This is called when we get a QEvent::Show. Let's see if we have to restore it to a previous position.
-    Item *layoutItem = m_lastPosition.layoutItem();
+   /* Item *layoutItem = m_lastPosition.layoutItem();
     qCDebug(placeholder) << Q_FUNC_INFO << layoutItem << m_lastPosition.m_wasFloating;
     if (!layoutItem)
         return; // nothing to do, no last position
@@ -553,7 +553,7 @@ void DockWidgetBase::Private::maybeRestoreToPreviousPosition()
     }
 
     // Finally, restore it
-    restoreToPreviousPosition();
+    restoreToPreviousPosition(); */
 }
 
 int DockWidgetBase::Private::currentTabIndex() const

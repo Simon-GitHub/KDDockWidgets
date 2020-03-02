@@ -20,6 +20,7 @@
 
 #include "AnimatedIndicators_p.h"
 #include "DropArea_p.h"
+#include "multisplitter/AnchorGroup_p.h"
 
 #include <QPainter>
 #include <QState>
@@ -355,7 +356,7 @@ QPoint AnimatedIndicators::posForIndicator(DropIndicatorOverlayInterface::DropLo
 
 void AnimatedIndicators::onHoveredFrameChanged(Frame *frame)
 {
-    if (frame) {
+    /*if (frame) {
         Item *item = m_dropArea->multiSplitterLayout()->itemForFrame(frame);
         AnchorGroup group = item->anchorGroup();
         Q_ASSERT(group.isValid());
@@ -377,7 +378,7 @@ void AnimatedIndicators::onHoveredFrameChanged(Frame *frame)
         m_innerTopRubberBand->setAnchor(nullptr);
         m_innerLeftRubberBand->setAnchor(nullptr);
         m_innerRightRubberBand->setAnchor(nullptr);
-    }
+    }*/
 }
 
 AnimatedCenterRubberBand::AnimatedCenterRubberBand(AnimatedIndicators *parent)
@@ -529,9 +530,9 @@ void AnimatedOutterRubberBand::updateAnchorOffset()
 {
     if (anchor) {
         if (isVisible()) {
-            anchor->setPositionOffset(length().toInt());
+            //anchor->setPositionOffset(length().toInt());
         } else {
-            anchor->setPositionOffset(0);
+            //anchor->setPositionOffset(0);
         }
     }
 }

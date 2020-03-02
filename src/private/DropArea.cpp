@@ -44,8 +44,7 @@ DropArea::DropArea(QWidgetOrQuick *parent)
     , m_dropIndicatorOverlay(Config::self().frameworkWidgetFactory()->createDropIndicatorOverlay(this))
 {
     qCDebug(creation) << "DropArea";
-    connect(m_layout, &MultiSplitterLayout::aboutToDumpDebug,
-            this, &DropArea::debug_updateItemNamesForGammaray);
+
 }
 
 DropArea::~DropArea()
@@ -133,33 +132,22 @@ void DropArea::addDockWidget(DockWidgetBase *dw, Location location, DockWidgetBa
     }
 
     if (option & AddingOption_StartHidden) {
-        m_layout->addWidget(dw, location, relativeToFrame, option);
+        //m_layout->addWidget(dw, location, relativeToFrame, option);
     } else {
-        m_layout->addWidget(frame, location, relativeToFrame, option);
+        //m_layout->addWidget(frame, location, relativeToFrame, option);
     }
 }
 
 void DropArea::debug_updateItemNamesForGammaray()
 {
-    for (Item *item : m_layout->items()) {
-        if (auto frame = item->frame()) {
-            if (!frame->dockWidgets().isEmpty())
-                frame->setObjectName(frame->dockWidgets().at(0)->uniqueName());
-        }
-    }
 
-    for (Anchor *a : m_layout->anchors())
-        a->debug_updateItemNames();
 }
 
-bool DropArea::checkSanity(MultiSplitterLayout::AnchorSanityOption o)
-{
-    return m_layout->checkSanity(o);
-}
 
 bool DropArea::contains(DockWidgetBase *dw) const
 {
-    return dw->frame() && m_layout->contains(dw->frame());
+//    return dw->frame() && m_layout->contains(dw->frame());
+    return false;
 }
 
 QString DropArea::affinityName() const

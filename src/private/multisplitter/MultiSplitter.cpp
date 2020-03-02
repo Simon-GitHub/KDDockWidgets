@@ -42,14 +42,14 @@ MultiSplitter::MultiSplitter(QWidgetOrQuick *parent)
     : QWidgetAdapter(parent)
     , m_layout(new MultiSplitterLayout(this))
 {
-    connect(m_layout, &MultiSplitterLayout::minimumSizeChanged, this, [this] (QSize sz) {
+    /*connect(m_layout, &MultiSplitterLayout::minimumSizeChanged, this, [this] (QSize sz) {
         setMinimumSize(sz);
     });
 
     connect(m_layout, &MultiSplitterLayout::sizeChanged, this, [this] (QSize sz) {
         if (!m_inResizeEvent && !LayoutSaver::restoreInProgress())
             resize(sz);
-    });
+    });*/
 
     setMinimumSize(m_layout->minimumSize());
 }
@@ -65,7 +65,7 @@ int MultiSplitter::count() const
 
 void MultiSplitter::onLayoutRequest()
 {
-    m_layout->updateSizeConstraints();
+    // m_layout->updateSizeConstraints(); TODO
 }
 
 bool MultiSplitter::onResize(QSize newSize)

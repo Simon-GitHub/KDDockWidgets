@@ -45,14 +45,14 @@ struct ItemRef
         , guard(it)
         , connection(conn)
     {
-        item->ref();
+        //item->ref();
     }
 
     ~ItemRef()
     {
         if (guard) {
             QObject::disconnect(connection);
-            item->unref();
+          //  item->unref();
         }
     }
 

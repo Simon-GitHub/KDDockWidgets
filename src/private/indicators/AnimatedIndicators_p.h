@@ -30,6 +30,7 @@
 namespace KDDockWidgets {
 
 class Anchor;
+class AnchorGroup;
 class AnimatedIndicators;
 
 class AnimatedRubberBand : public QRubberBand

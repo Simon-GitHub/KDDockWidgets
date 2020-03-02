@@ -40,39 +40,12 @@ LastPosition::~LastPosition()
 
 void LastPosition::addPlaceholderItem(Item *placeholder)
 {
-    Q_ASSERT(placeholder);
-
-    // 1. Already exists, nothing to do
-    if (containsPlaceholder(placeholder))
-        return;
-
-    if (placeholder->isInMainWindow()) {
-        // 2. If we have a MainWindow placeholder we don't need nothing else
-        removePlaceholders();
-    } else {
-        // 3. It's a placeholder to a FloatingWindow. Let's still keep any MainWindow placeholders we have
-        // as FloatingWindow are temporary so we might need the MainWindow placeholder later.
-        removeNonMainWindowPlaceholders();
-    }
-
-    // Make sure our list only contains valid placeholders. We save the result so we can disconnect from the lambda, since the Item might outlive LastPosition
-    QMetaObject::Connection connection = QObject::connect(placeholder, &QObject::destroyed, placeholder, [this, placeholder] {
-        removePlaceholder(placeholder);
-    });
-
-    m_placeholders.push_back(std::unique_ptr<ItemRef>(new ItemRef(connection, placeholder)));
-
-    // NOTE: We use a list instead of simply two variables to keep the placeholders, because
-    // a placeholder from a FloatingWindow might become a MainWindow one without we knowing,
-    // like when dragging a floating window into a MainWindow. So, isInMainWindow() won't return
-    // the same value always, hence we just shove them into a list, instead of giving them meaningful names in separated variables
+    // TODO
 }
 
 QWidgetOrQuick *LastPosition::window() const
 {
-    if (Item *placeholder = layoutItem())
-        return placeholder->window();
-
+    // TODO
     return nullptr;
 }
 
@@ -81,11 +54,7 @@ Item *LastPosition::layoutItem() const
     // Return the layout item that is in a MainWindow, that's where we restore the dock widget to.
     // In the future we might want to restore it to FloatingWindows.
 
-    for (const auto &itemref : m_placeholders) {
-        if (itemref->item->isInMainWindow())
-            return itemref->item;
-    }
-
+    // TODO
     return nullptr;
 }
 
@@ -100,21 +69,21 @@ bool LastPosition::containsPlaceholder(Item *item) const
 
 void LastPosition::removePlaceholders(const MultiSplitterLayout *layout)
 {
-    m_placeholders.erase(std::remove_if(m_placeholders.begin(), m_placeholders.end(), [layout] (const std::unique_ptr<ItemRef> &itemref) {
+ /*   m_placeholders.erase(std::remove_if(m_placeholders.begin(), m_placeholders.end(), [layout] (const std::unique_ptr<ItemRef> &itemref) {
                              return itemref->item->layout() == layout;
-                         }), m_placeholders.end());
+                         }), m_placeholders.end());*/
 }
 
 void LastPosition::removeNonMainWindowPlaceholders()
 {
-    auto it = m_placeholders.begin();
+  /*  auto it = m_placeholders.begin();
     while (it != m_placeholders.end()) {
         ItemRef *itemref = it->get();
         if (!itemref->item->isInMainWindow())
             it = m_placeholders.erase(it);
         else
             ++it;
-    }
+    }*/
 }
 
 void LastPosition::removePlaceholder(Item *placeholder)
@@ -139,68 +108,12 @@ QRect LastPosition::lastFloatingGeometry() const
 
 void LastPosition::deserialize(const LayoutSaver::LastPosition &lp)
 {
-    for (const auto &placeholder : qAsConst(lp.placeholders)) {
-        MultiSplitterLayout *layout;
-        int itemIndex = placeholder.itemIndex;
-        if (placeholder.isFloatingWindow) {
-            if (placeholder.indexOfFloatingWindow == -1) {
-                continue; // Skip
-            } else {
-                FloatingWindow *fw = DockRegistry::self()->nestedwindows().at(placeholder.indexOfFloatingWindow);
-                layout = fw->multiSplitterLayout();
-            }
-        } else {
-            MainWindowBase *mainWindow = DockRegistry::self()->mainWindowByName(placeholder.mainWindowUniqueName);
-            layout = mainWindow->multiSplitterLayout();
-        }
-
-        const ItemList &items = layout->items();
-        if (itemIndex < items.size()) {
-            Item *item = items.at(itemIndex);
-            addPlaceholderItem(item);
-        } else {
-            // Shouldn't happen, maybe even assert
-            qWarning() << Q_FUNC_INFO <<"Couldn't find item index" << itemIndex << "in" << items;
-        }
-
-    }
-
-    m_lastFloatingGeo = lp.lastFloatingGeometry;
-    m_tabIndex = lp.tabIndex;
-    m_wasFloating = lp.wasFloating;
+ // TODO
 
 }
 
 LayoutSaver::LastPosition LastPosition::serialize() const
 {
-    LayoutSaver::LastPosition l;
-
-    for (auto &itemRef : m_placeholders) {
-        LayoutSaver::Placeholder p;
-
-        Item *item = itemRef->item;
-        MultiSplitterLayout *layout = item->layout();
-        const int itemIndex = layout->items().indexOf(item);
-
-        auto fw = layout->multiSplitter()->floatingWindow();
-        auto mainWindow = layout->multiSplitter()->mainWindow();
-        Q_ASSERT(mainWindow || fw);
-        p.isFloatingWindow = fw;
-
-        if (p.isFloatingWindow) {
-            p.indexOfFloatingWindow = fw->beingDeleted() ? -1 : DockRegistry::self()->nestedwindows().indexOf(fw); // TODO: Remove once we stop using deleteLater with FloatingWindow. delete would be better
-        } else {
-            p.mainWindowUniqueName = mainWindow->uniqueName();
-            Q_ASSERT(!p.mainWindowUniqueName.isEmpty());
-        }
-
-        p.itemIndex = itemIndex;
-        l.placeholders.push_back(p);
-    }
-
-    l.lastFloatingGeometry = lastFloatingGeometry();
-    l.tabIndex = m_tabIndex;
-    l.wasFloating = m_wasFloating;
-
-    return l;
+// TODO
+    return {};
 }

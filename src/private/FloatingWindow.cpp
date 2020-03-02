@@ -116,9 +116,9 @@ FloatingWindow::FloatingWindow(MainWindowBase *parent)
     maybeCreateResizeHandler();
 
     updateTitleBarVisibility();
-    connect(ms, &MultiSplitterLayout::visibleWidgetCountChanged, this, &FloatingWindow::onFrameCountChanged);
+    /*connect(ms, &MultiSplitterLayout::visibleWidgetCountChanged, this, &FloatingWindow::onFrameCountChanged);
     connect(ms, &MultiSplitterLayout::visibleWidgetCountChanged, this, &FloatingWindow::numFramesChanged);
-    connect(ms, &MultiSplitterLayout::visibleWidgetCountChanged, this, &FloatingWindow::onVisibleFrameCountChanged);
+    connect(ms, &MultiSplitterLayout::visibleWidgetCountChanged, this, &FloatingWindow::onVisibleFrameCountChanged); TODO*/
     m_layoutDestroyedConnection = connect(ms, &MultiSplitterLayout::destroyed, this, &FloatingWindow::scheduleDeleteLater);
 }
 
@@ -378,7 +378,7 @@ void FloatingWindow::onCloseEvent(QCloseEvent *e)
 
 bool FloatingWindow::deserialize(const LayoutSaver::FloatingWindow &fw)
 {
-    if (dropArea()->multiSplitterLayout()->deserialize(fw.multiSplitterLayout)) {
+    if (false /* TODOdropArea()->multiSplitterLayout()->deserialize(fw.multiSplitterLayout)*/) {
         show();
         return true;
     } else {
@@ -392,7 +392,7 @@ LayoutSaver::FloatingWindow FloatingWindow::serialize() const
 
     fw.geometry = geometry();
     fw.isVisible = isVisible();
-    fw.multiSplitterLayout = dropArea()->multiSplitterLayout()->serialize();
+    // TODO fw.multiSplitterLayout = dropArea()->multiSplitterLayout()->serialize();
     fw.screenIndex = screenNumberForWidget(this);
     fw.screenSize = screenSizeForWidget(this);
     fw.affinityName = affinityName();

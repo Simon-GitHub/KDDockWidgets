@@ -20,7 +20,7 @@ set(DOCKSLIBS_SRCS
     DockWidgetBase.cpp
     MainWindow.cpp
     MainWindowBase.cpp
-    LayoutSaver.cpp
+    # LayoutSaver.cpp
     private/LastPosition.cpp
     private/ObjectViewer.cpp
     private/DropIndicatorOverlayInterface.cpp
@@ -37,7 +37,7 @@ set(DOCKSLIBS_SRCS
     private/FloatingWindow.cpp
     private/Logging.cpp
     private/TitleBar.cpp
-    private/DebugWindow.cpp
+    # private/DebugWindow.cpp
     private/DockRegistry.cpp
     private/Draggable.cpp
     private/WindowBeingDragged.cpp

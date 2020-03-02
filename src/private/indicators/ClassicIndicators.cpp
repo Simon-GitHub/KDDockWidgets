@@ -392,7 +392,7 @@ void ClassicIndicators::setDropLocation(ClassicIndicators::DropLocation location
         break;
     }
 
-    QRect rect = layout->rectForDrop(m_windowBeingDragged, multisplitterLocation,
+    /*QRect rect = layout->rectForDrop(m_windowBeingDragged, multisplitterLocation,
                                      layout->itemForFrame(relativeToFrame));
 
     m_rubberBand->setGeometry(geometryForRubberband(rect));
@@ -400,7 +400,7 @@ void ClassicIndicators::setDropLocation(ClassicIndicators::DropLocation location
     if (rubberBandIsTopLevel()) {
         m_rubberBand->raise();
         raiseIndicators();
-    }
+    } TODO */
 }
 
 QRect ClassicIndicators::geometryForRubberband(QRect localRect) const

@@ -157,7 +157,10 @@ bool MainWindowBase::deserialize(const LayoutSaver::MainWindow &mw)
         d->affinityName = mw.affinityName;
     }
 
-    return dropArea()->multiSplitterLayout()->deserialize(mw.multiSplitterLayout);
+
+    return false;
+
+    //return dropArea()->multiSplitterLayout()->deserialize(mw.multiSplitterLayout);
 }
 
 LayoutSaver::MainWindow MainWindowBase::serialize() const
@@ -170,7 +173,7 @@ LayoutSaver::MainWindow MainWindowBase::serialize() const
     m.uniqueName = uniqueName();
     m.screenIndex = screenNumberForWidget(this);
     m.screenSize = screenSizeForWidget(this);
-    m.multiSplitterLayout = dropArea()->multiSplitterLayout()->serialize();
+    //m.multiSplitterLayout = dropArea()->multiSplitterLayout()->serialize();
     m.affinityName = d->affinityName;
 
     return m;

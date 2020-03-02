@@ -292,7 +292,7 @@ void Frame::restoreToPreviousPosition()
         return;
     }
 
-    m_layoutItem->restorePlaceholder(this);
+    // TODO m_layoutItem->restorePlaceholder(this);
 }
 
 int Frame::currentTabIndex() const

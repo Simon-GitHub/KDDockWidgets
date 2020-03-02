@@ -57,19 +57,19 @@ int Separator::position() const
 void Separator::onMousePress()
 {
     Q_ASSERT(!m_anchor->isFollowing());
-    m_anchor->onMousePress();
+    //m_anchor->onMousePress(); TODO
 }
 
 void Separator::onMouseMove(QPoint globalPos)
 {
     Q_ASSERT(!m_anchor->isFollowing());
-    m_anchor->onMouseMoved(parentWidget()->mapFromGlobal(globalPos));
+   // m_anchor->onMouseMoved(parentWidget()->mapFromGlobal(globalPos)); TODO
 }
 
 void Separator::onMouseRelease()
 {
     Q_ASSERT(!m_anchor->isFollowing());
-    m_anchor->onMouseReleased();
+   //  m_anchor->onMouseReleased(); TODO
 }
 
 void Separator::move(int p)
