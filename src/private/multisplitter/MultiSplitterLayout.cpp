@@ -36,36 +36,7 @@
 #include <QtMath>
 #include <QScopedValueRollback>
 
-#define INDICATOR_MINIMUM_LENGTH 100
-#define KDDOCKWIDGETS_MIN_WIDTH 80
-#define KDDOCKWIDGETS_MIN_HEIGHT 90
-
 using namespace KDDockWidgets;
-
-/**
- * Returns the widget's min-width if orientation is Vertical, the min-height otherwise.
- */
-inline int widgetMinLength(const QWidgetOrQuick *w, Qt::Orientation orientation)
-{
-    int min = 0;
-    if (orientation == Qt::Vertical) {
-        if (w->minimumWidth() > 0)
-            min = w->minimumWidth();
-        else
-            min = w->minimumSizeHint().width();
-
-        min = qMax(MultiSplitterLayout::hardcodedMinimumSize().width(), min);
-    } else {
-        if (w->minimumHeight() > 0)
-            min = w->minimumHeight();
-        else
-            min = w->minimumSizeHint().height();
-
-        min = qMax(MultiSplitterLayout::hardcodedMinimumSize().height(), min);
-    }
-
-    return qMax(min, 0);
-}
 
 MultiSplitterLayout::MultiSplitterLayout(MultiSplitter *ms)
     : m_multiSplitter(ms)
@@ -78,14 +49,14 @@ const ItemList MultiSplitterLayout::items() const
     return m_items;
 }
 
-MultiSplitterLayout::Length MultiSplitterLayout::availableLengthForDrop(Location location, const Item *relativeTo) const
+Length MultiSplitterLayout::availableLengthForDrop(Location location, const Item *relativeTo) const
 {
     Length length;
 
     return length;
 }
 
-MultiSplitterLayout::Length MultiSplitterLayout::lengthForDrop(const QWidget *widget, Location location,
+Length MultiSplitterLayout::lengthForDrop(const QWidget *widget, Location location,
                                                                const Item *relativeTo) const
 {
     Q_ASSERT(location != Location_None);
@@ -94,7 +65,7 @@ MultiSplitterLayout::Length MultiSplitterLayout::lengthForDrop(const QWidget *wi
     return available;
 }
 
-QRect MultiSplitterLayout::rectForDrop(MultiSplitterLayout::Length lfd, Location location, QRect relativeToRect) const
+QRect MultiSplitterLayout::rectForDrop(Length lfd, Location location, QRect relativeToRect) const
 {
     QRect result;
     const int widgetLength = lfd.length();
@@ -199,10 +170,4 @@ Item *MultiSplitterLayout::itemForFrame(const Frame *frame) const
             return item;
     }
     return nullptr;
-}
-
-/**static*/
-QSize MultiSplitterLayout::hardcodedMinimumSize()
-{
-    return QSize(KDDOCKWIDGETS_MIN_WIDTH, KDDOCKWIDGETS_MIN_HEIGHT);
 }
