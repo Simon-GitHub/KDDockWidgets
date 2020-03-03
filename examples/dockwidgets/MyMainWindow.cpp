@@ -105,7 +105,7 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
     connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
 
     setAffinityName(affinityName);
-    //createDockWidgets();
+    createDockWidgets();
 }
 
 void MyMainWindow::createDockWidgets()
@@ -113,12 +113,15 @@ void MyMainWindow::createDockWidgets()
     Q_ASSERT(m_dockwidgets.isEmpty());
 
     // Create 9 KDDockWidget::DockWidget and the respective widgets they're hosting (MyWidget instances)
-    for (int i = 0; i < 9; i++)
+    //for (int i = 0; i < 9; i++) TODO
+    for (int i = 0; i < 1; i++)
         m_dockwidgets << newDockWidget();
 
 
     // MainWindow::addDockWidget() attaches a dock widget to the main window:
     addDockWidget(m_dockwidgets[0], KDDockWidgets::Location_OnTop);
+
+    return; // TODO
 
     // Here, for finer granularity we specify right of dockwidgets[0]:
     addDockWidget(m_dockwidgets[1], KDDockWidgets::Location_OnRight, m_dockwidgets[0]);

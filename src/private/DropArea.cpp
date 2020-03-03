@@ -143,6 +143,11 @@ void DropArea::debug_updateItemNamesForGammaray()
 
 }
 
+bool DropArea::checkSanity(MultiSplitterLayout::AnchorSanityOption o)
+{
+    return m_layout->checkSanity(o);
+}
+
 
 bool DropArea::contains(DockWidgetBase *dw) const
 {

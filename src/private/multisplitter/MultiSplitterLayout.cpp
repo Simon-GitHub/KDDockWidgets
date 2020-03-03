@@ -49,6 +49,20 @@ const ItemList MultiSplitterLayout::items() const
     return m_items;
 }
 
+const Anchor::List MultiSplitterLayout::anchors() const { return m_anchors; }
+
+Anchor::List MultiSplitterLayout::anchors(Qt::Orientation orientation, bool includeStatic,
+                                          bool includePlaceholders) const
+{
+    Anchor::List result;
+    for (Anchor *anchor : m_anchors) {
+        if ((includeStatic || !anchor->isStatic()) && (includePlaceholders || !anchor->isFollowing()) && anchor->orientation() == orientation)
+            result << anchor;
+    }
+
+    return result;
+}
+
 Length MultiSplitterLayout::availableLengthForDrop(Location location, const Item *relativeTo) const
 {
     Length length;
@@ -57,7 +71,7 @@ Length MultiSplitterLayout::availableLengthForDrop(Location location, const Item
 }
 
 Length MultiSplitterLayout::lengthForDrop(const QWidget *widget, Location location,
-                                                               const Item *relativeTo) const
+                                          const Item *relativeTo) const
 {
     Q_ASSERT(location != Location_None);
     Length available = availableLengthForDrop(location, relativeTo);
@@ -104,7 +118,7 @@ QRect MultiSplitterLayout::rectForDrop(Length lfd, Location location, QRect rela
 }
 
 
-QRect MultiSplitterLayout::rectForDrop(const Frame *widgetBeingDropped, Location location, const Item *relativeTo) const
+QRect MultiSplitterLayout::rectForDrop(const QWidget *widgetBeingDropped, Location location, const Item *relativeTo) const
 {
     Q_ASSERT(widgetBeingDropped);
     Length lfd = lengthForDrop(widgetBeingDropped, location, relativeTo);
@@ -135,10 +149,10 @@ void MultiSplitterLayout::setSize(QSize size)
 
 AnchorGroup MultiSplitterLayout::staticAnchorGroup() const
 {
-    return {};
+    return m_staticAnchorGroup;
 }
 
-void MultiSplitterLayout::addWidget(Frame *w, Location location, Frame *relativeToWidget, AddingOption option)
+void MultiSplitterLayout::addWidget(QWidget *w, Location location, Frame *relativeToWidget, AddingOption option)
 {
     Anchor *newAnchor = nullptr;
     Item *relativeToItem = itemForFrame(relativeToWidget);
@@ -170,4 +184,29 @@ Item *MultiSplitterLayout::itemForFrame(const Frame *frame) const
             return item;
     }
     return nullptr;
+}
+
+int MultiSplitterLayout::visibleCount() const
+{
+    return -1;
+}
+
+int MultiSplitterLayout::placeholderCount() const
+{
+    return -1;
+}
+
+int MultiSplitterLayout::numAnchorsFollowing() const
+{
+    return -1;
+}
+
+void MultiSplitterLayout::dumpDebug() const
+{
+
+}
+
+QSize MultiSplitterLayout::availableSize() const
+{
+    return {};
 }

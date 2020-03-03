@@ -245,7 +245,7 @@ public:
     Anchor::List anchorsFollowing(Anchor *followee) const;
 
     ///@brief returns the number of anchors that are following others, just for tests.
-    int numAchorsFollowing() const;
+    int numAnchorsFollowing() const;
 
     ///@brief returns the number of anchors that are following others, just for tests.
     int numVisibleAnchors() const;

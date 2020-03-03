@@ -36,6 +36,7 @@
 namespace KDDockWidgets {
 
 class Frame;
+class AnchorGroup;
 
 class DOCKS_EXPORT_FOR_UNIT_TESTS Item : public QObject // clazy:exclude=ctor-missing-parent-argument
 {
@@ -50,13 +51,29 @@ public:
     Frame * frame() const; // TODO template
     void ref();
     void unref();
+    int refCount() const; // for tests
 
     bool isPlaceholder() const { return false; }
     QRect geometry() const;
+    QSize minimumSize() const { return QSize(); }
+    int length(Qt::Orientation) const;
+    int minLength(Qt::Orientation orientation) const;
+
+    AnchorGroup& anchorGroup();
+    const AnchorGroup& anchorGroup() const;
+
+    int height() const;
+    int width() const;
+    QSize size() const { return QSize(); }
+
+    bool isInMainWindow() const; // TODO: Make main window agnostic
+    QWidget *parentWidget() const; // TODO Check if needed
+    void restoreSizes(QSize minSize, QRect geometry) {} // Just for LayoutSaver::restore. // TODO Check if needed
 private:
     class Private;
     Private *const d;
 };
+
 
 }
 

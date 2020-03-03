@@ -66,3 +66,23 @@ Anchor *Anchor::endFollowee() const
 
     return nullptr;
 }
+
+Qt::Orientation Anchor::orientation() const
+{
+    return m_orientation;
+}
+
+int Anchor::position() const
+{
+    return -1;
+}
+
+bool Anchor::isValid() const
+{
+    return false;
+}
+
+int Anchor::cumulativeMinLength(Anchor::Side side) const
+{
+    return -1;
+}

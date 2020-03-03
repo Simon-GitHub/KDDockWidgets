@@ -146,3 +146,5 @@ inline int widgetMinLength(const QWidgetOrQuick *w, Qt::Orientation orientation)
 
 }
 
+Q_DECLARE_METATYPE(KDDockWidgets::Length)
+

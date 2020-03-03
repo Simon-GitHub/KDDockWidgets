@@ -27,3 +27,8 @@
 
 using namespace KDDockWidgets;
 
+
+bool AnchorGroup::isValid() const
+{
+    return false;
+}

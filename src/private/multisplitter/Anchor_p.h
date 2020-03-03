@@ -109,7 +109,7 @@ public:
     };
     Q_ENUM(Side)
 
-    explicit Anchor(Qt::Orientation orientationf, Type = Type_None);
+    explicit Anchor(Qt::Orientation orientation, Type = Type_None);
     bool isStatic() const { return m_type & Type_Static; }
     bool isFollowing() const { return m_followee != nullptr; }
     int thickness() const;
@@ -125,10 +125,28 @@ public:
      * @brief getter for the followee
      */
     Anchor *followee() const { return m_followee; }
+
+    Qt::Orientation orientation() const;
+    Anchor *from() const { return m_from; }
+    Anchor *to() const { return m_to; }
+
+    void setPosition(int) {}
+    int position() const;
+
+    /**
+     * @brief Checks if this anchor is valid. It's valid if @ref from and @ref to are non-null, and not the same.
+     * @return true if this anchor is valid.
+     */
+    bool isValid() const;
+
+    int cumulativeMinLength(Anchor::Side side) const;
+
 private:
     const Qt::Orientation m_orientation;
     const Type m_type;
     Anchor *m_followee = nullptr;
+    QPointer<Anchor> m_from;// QPointer just so we can assert. They should never be null.
+    QPointer<Anchor> m_to;
 
 };
 

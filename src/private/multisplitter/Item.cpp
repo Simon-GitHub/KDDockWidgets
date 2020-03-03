@@ -44,6 +44,7 @@ public:
     Item *const q;
     QRect m_geometry;
     MultiSplitterLayout *const m_layout;
+    AnchorGroup m_anchorGroup;
 };
 
 
@@ -67,7 +68,54 @@ void Item::unref()
 
 }
 
+int Item::refCount() const
+{
+    return 0;
+}
+
 QRect Item::geometry() const
 {
     return d->m_geometry;
+}
+
+
+int Item::length(Qt::Orientation) const
+{
+    return 0;
+}
+
+int Item::minLength(Qt::Orientation orientation) const
+{
+    return 0;
+}
+
+AnchorGroup &Item::anchorGroup()
+{
+    return d->m_anchorGroup;
+}
+
+const AnchorGroup &Item::anchorGroup() const
+{
+    return d->m_anchorGroup;
+}
+
+
+int Item::height() const
+{
+    return -1;
+}
+
+int Item::width() const
+{
+    return -1;
+}
+
+bool Item::isInMainWindow() const
+{
+    return false;
+}
+
+QWidget *Item::parentWidget() const
+{
+    return nullptr;
 }

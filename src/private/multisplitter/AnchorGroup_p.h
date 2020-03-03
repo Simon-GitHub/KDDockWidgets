@@ -36,11 +36,23 @@ class Item;
 struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
 {
 
+    bool isValid() const;
+    QSize itemSize() const { return {}; } // TODO: Check if needed
+
     Anchor *left = nullptr;
     Anchor *top = nullptr;
     Anchor *right = nullptr;
     Anchor *bottom = nullptr;
 
+    QDebug debug(QDebug d) const {}
 };
+
 }
+
+inline QDebug operator<< (QDebug d, KDDockWidgets::AnchorGroup *group)
+{
+    // out-of-line as it needs to include MultiSplitterLayout
+    return group->debug(d);
+}
+
 #endif
