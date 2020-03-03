@@ -53,3 +53,16 @@ int Anchor::thickness(bool staticAnchor)
 {
     return Config::self().separatorThickness(staticAnchor);
 }
+
+Anchor *Anchor::endFollowee() const
+{
+    Anchor *a = m_followee;
+    while (a) {
+        if (!a->followee())
+            return a;
+
+        a = a->followee();
+    }
+
+    return nullptr;
+}

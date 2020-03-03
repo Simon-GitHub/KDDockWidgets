@@ -52,7 +52,7 @@ public:
     void unref();
 
     bool isPlaceholder() const { return false; }
-
+    QRect geometry() const;
 private:
     class Private;
     Private *const d;

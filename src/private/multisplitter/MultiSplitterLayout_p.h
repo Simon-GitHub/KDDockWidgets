@@ -44,6 +44,60 @@ class MultiSplitter;
 class AnchorGroup;
 
 /**
+ * Returns the width of the widget if orientation is Vertical, the height otherwise.
+ */
+template <typename T>
+inline int widgetLength(const T *w, Qt::Orientation orientation)
+{
+    return (orientation == Qt::Vertical) ? w->width() : w->height();
+}
+
+inline int lengthFromSize(QSize sz, Qt::Orientation orientation)
+{
+    return orientation == Qt::Vertical ? sz.width()
+                                       : sz.height();
+}
+
+inline Anchor::Side sideForLocation(Location loc)
+{
+    switch (loc) {
+    case KDDockWidgets::Location_OnLeft:
+    case KDDockWidgets::Location_OnTop:
+        return Anchor::Side1;
+    case KDDockWidgets::Location_OnRight:
+    case KDDockWidgets::Location_OnBottom:
+        return Anchor::Side2;
+    default:
+        break;
+    }
+
+    return Anchor::Side_None;
+}
+
+inline Qt::Orientation orientationForLocation(Location loc)
+{
+    switch (loc) {
+    case KDDockWidgets::Location_OnLeft:
+    case KDDockWidgets::Location_OnRight:
+        return Qt::Vertical;
+    case KDDockWidgets::Location_OnTop:
+    case KDDockWidgets::Location_OnBottom:
+        return Qt::Horizontal;
+    default:
+        break;
+    }
+
+    return Qt::Vertical;
+}
+
+inline Qt::Orientation anchorOrientationForLocation(Location l)
+{
+    return (l == Location_OnLeft || l == Location_OnRight) ? Qt::Vertical
+                                                           : Qt::Horizontal;
+}
+
+
+/**
  * A MultiSplitter is like a QSplitter but supports mixing vertical and horizontal splitters in
  * any combination.
  *
@@ -59,12 +113,53 @@ class DOCKS_EXPORT_FOR_UNIT_TESTS MultiSplitterLayout : public QObject // clazy:
 
 public:
 
+    struct Length {
+        Length() = default;
+        Length(int side1, int side2)
+            : side1Length(side1)
+            , side2Length(side2)
+        {}
+
+        int side1Length = 0;
+        int side2Length = 0;
+        int length() const { return side1Length + side2Length; }
+
+        void setLength(int newLength)
+        {
+            // Sets the new length, preserving proportion
+            side1Length = int(side1Factor() * newLength);
+            side2Length = newLength - side1Length;
+        }
+
+        bool isNull() const
+        {
+            return length() <= 0;
+        }
+
+    private:
+        qreal side1Factor() const
+        {
+            return (1.0 * side1Length) / length();
+        }
+    };
+
     explicit MultiSplitterLayout(MultiSplitter*);
 
     const ItemList items() const;
     int count() const { return m_items.size(); }
     const Anchor::List anchors() const { return m_anchors; }
-    QRect rectForDrop(const Frame *widget, KDDockWidgets::Location location, const Item *relativeTo) const;
+    QRect rectForDrop(MultiSplitterLayout::Length lfd, Location location, QRect relativeToRect) const;
+    QRect rectForDrop(const Frame *widgetBeingDropped, KDDockWidgets::Location location, const Item *relativeTo) const;
+
+    /**
+     * @brief Returns the size that the widget will get when dropped at this specific location.
+     *
+     * When location is Left or Right then the length represents a width, otherwise an height.
+     * This function is also called to know the size of the rubberband when hovering over a location.
+     */
+    MultiSplitterLayout::Length lengthForDrop(const QWidget *widget, KDDockWidgets::Location location,
+                                              const Item *relativeTo) const;
+
     QSize minimumSize() const { return m_minSize; }
     void setSize(QSize);
     AnchorGroup staticAnchorGroup() const;
@@ -93,10 +188,38 @@ public:
 
     void clear(bool);
 
+    bool isEmpty() const { return m_items.isEmpty(); }
+
+    /**
+     * @brief returns the contents width.
+     * Usually it's the same width as the respective parent MultiSplitter.
+     */
+    int width() const { return m_size.width(); }
+
+    /**
+     * @brief returns the contents height.
+     * Usually it's the same height as the respective parent MultiSplitter.
+     */
+    int height() const { return m_size.height(); }
+
+    /** Returns how much is available for the new drop. It already counts with the space for new anchor that will be created.
+     * So it returns this layout's width() (or height), minus the minimum-sizes of all widgets, minus the thickness of all anchors
+     * minus the thickness of the anchor that would be created.
+     **/
+    Length availableLengthForDrop(KDDockWidgets::Location location, const Item *relativeTo) const;
+
+    /**
+     * @brief No widget can have a minimum size smaller than this, regardless of their minimum size.
+     */
+    static QSize hardcodedMinimumSize();
+
 Q_SIGNALS:
     void visibleWidgetCountChanged();
 
 private:
+
+    Item *itemForFrame(const Frame *frame) const;
+
     QSize m_size;
     QSize m_minSize;
     Anchor::List m_anchors;

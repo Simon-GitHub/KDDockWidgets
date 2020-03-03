@@ -40,8 +40,10 @@ public:
         , m_layout(layout)
     {
     }
-    MultiSplitterLayout *const m_layout;
+
     Item *const q;
+    QRect m_geometry;
+    MultiSplitterLayout *const m_layout;
 };
 
 
@@ -63,4 +65,9 @@ void Item::ref()
 void Item::unref()
 {
 
+}
+
+QRect Item::geometry() const
+{
+    return d->m_geometry;
 }

@@ -116,6 +116,15 @@ public:
     bool isVertical() const { return m_orientation == Qt::Vertical; }
     static int thickness(bool staticAnchor);
 
+    /**
+     * @brief Returns the last followee in the chain.
+     */
+    Anchor *endFollowee() const;
+
+    /**
+     * @brief getter for the followee
+     */
+    Anchor *followee() const { return m_followee; }
 private:
     const Qt::Orientation m_orientation;
     const Type m_type;

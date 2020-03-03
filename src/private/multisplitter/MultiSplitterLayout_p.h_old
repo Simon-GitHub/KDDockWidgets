@@ -125,7 +125,7 @@ public:
     ~MultiSplitterLayout() override;
 
     /**
-     * @brief No widget can have a minimum size smaller than this, regardless of their minimum size.s
+     * @brief No widget can have a minimum size smaller than this, regardless of their minimum size.
      */
     static QSize hardcodedMinimumSize();
 
