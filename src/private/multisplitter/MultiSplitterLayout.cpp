@@ -54,7 +54,7 @@ const ItemList MultiSplitterLayout::items() const
     return m_items;
 }
 
-QRect MultiSplitterLayout::rectForDrop(const QWidgetOrQuick *widget, Location location, const Item *relativeTo) const
+QRect MultiSplitterLayout::rectForDrop(const Frame *widget, Location location, const Item *relativeTo) const
 {
     return {};
 }
@@ -69,7 +69,7 @@ AnchorGroup MultiSplitterLayout::staticAnchorGroup() const
     return {};
 }
 
-void MultiSplitterLayout::addWidget(QWidgetOrQuick *widget, Location location, Frame *relativeTo, AddingOption option)
+void MultiSplitterLayout::addWidget(Frame *widget, Location location, Frame *relativeTo, AddingOption option)
 {
 
 }

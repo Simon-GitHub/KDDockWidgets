@@ -105,7 +105,7 @@ MyMainWindow::MyMainWindow(const QString &uniqueName, KDDockWidgets::MainWindowO
     connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
 
     setAffinityName(affinityName);
-    createDockWidgets();
+    //createDockWidgets();
 }
 
 void MyMainWindow::createDockWidgets()

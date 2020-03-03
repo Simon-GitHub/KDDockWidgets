@@ -64,7 +64,7 @@ public:
     const ItemList items() const;
     int count() const { return m_items.size(); }
     const Anchor::List anchors() const { return m_anchors; }
-    QRect rectForDrop(const QWidgetOrQuick *widget, KDDockWidgets::Location location, const Item *relativeTo) const;
+    QRect rectForDrop(const Frame *widget, KDDockWidgets::Location location, const Item *relativeTo) const;
     QSize minimumSize() const { return m_minSize; }
     void setSize(QSize);
     AnchorGroup staticAnchorGroup() const;
@@ -72,7 +72,7 @@ public:
     /**
      * @brief Adds a widget to this MultiSplitter.
      */
-    void addWidget(QWidgetOrQuick *widget, KDDockWidgets::Location location, Frame *relativeTo = nullptr, AddingOption option = {});
+    void addWidget(Frame *widget, KDDockWidgets::Location location, Frame *relativeTo = nullptr, AddingOption option = {});
 
     /**
      * Adds an entire MultiSplitter into this layout. The donor MultiSplitter will be deleted
