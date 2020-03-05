@@ -41,7 +41,7 @@ using namespace KDDockWidgets;
 MultiSplitterLayout::MultiSplitterLayout(MultiSplitter *ms)
     : m_multiSplitter(ms)
 {
-
+    updateSizeConstraints();
 }
 
 const ItemList MultiSplitterLayout::items() const
@@ -184,6 +184,28 @@ Item *MultiSplitterLayout::itemForFrame(const Frame *frame) const
             return item;
     }
     return nullptr;
+}
+
+void MultiSplitterLayout::updateSizeConstraints()
+{
+    const int minH = m_topAnchor->cumulativeMinLength(Anchor::Side2);
+    const int minW = m_leftAnchor->cumulativeMinLength(Anchor::Side2);
+
+    const QSize newMinSize = QSize(minW, minH);
+    qCDebug(sizing) << Q_FUNC_INFO << "Updating size constraints from" << m_minSize
+                    << "to" << newMinSize;
+
+    setMinimumSize(newMinSize);
+}
+
+void MultiSplitterLayout::setMinimumSize(QSize sz)
+{
+    if (sz != m_minSize) {
+        m_minSize = sz;
+        setSize(m_size.expandedTo(m_minSize)); // Increase size in case we need to
+        Q_EMIT minimumSizeChanged(sz);
+    }
+    qCDebug(sizing) << Q_FUNC_INFO << "minSize = " << m_minSize;
 }
 
 int MultiSplitterLayout::visibleCount() const

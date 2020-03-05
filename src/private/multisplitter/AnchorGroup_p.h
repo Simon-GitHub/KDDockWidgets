@@ -39,6 +39,8 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     bool isValid() const;
     QSize itemSize() const { return {}; } // TODO: Check if needed
 
+    Anchor *anchorAtSide(Anchor::Side side, Qt::Orientation orientation) const;
+
     Anchor *left = nullptr;
     Anchor *top = nullptr;
     Anchor *right = nullptr;

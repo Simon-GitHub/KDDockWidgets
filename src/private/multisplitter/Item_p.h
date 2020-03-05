@@ -69,6 +69,8 @@ public:
     bool isInMainWindow() const; // TODO: Make main window agnostic
     QWidget *parentWidget() const; // TODO Check if needed
     void restoreSizes(QSize minSize, QRect geometry) {} // Just for LayoutSaver::restore. // TODO Check if needed
+
+    Anchor *anchorAtSide(Anchor::Side side, Qt::Orientation orientation) const;
 private:
     class Private;
     Private *const d;

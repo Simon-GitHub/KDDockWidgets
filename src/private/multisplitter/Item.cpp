@@ -119,3 +119,12 @@ QWidget *Item::parentWidget() const
 {
     return nullptr;
 }
+
+Anchor *Item::anchorAtSide(Anchor::Side side, Qt::Orientation orientation) const
+{
+    if (!d->m_anchorGroup.isValid())
+        qWarning() << Q_FUNC_INFO << "Invalid anchor group" << &d->m_anchorGroup
+                   << "in" << this << "; window=" << (parentWidget() ? parentWidget()->window() : nullptr);
+
+    return d->m_anchorGroup.anchorAtSide(side, orientation);
+}

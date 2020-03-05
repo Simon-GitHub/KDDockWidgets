@@ -214,6 +214,9 @@ public:
 Q_SIGNALS:
     void visibleWidgetCountChanged();
 
+    ///@brief emitted when the minimumSize changes
+    ///@sa minimumSize
+    void minimumSizeChanged(QSize);
 private:
 
     // TODO: Review friends
@@ -225,6 +228,17 @@ private:
     friend class LayoutSaver;
 
     Item *itemForFrame(const Frame *frame) const;
+
+    /**
+     * @brief Updates the min size of this layout.
+     */
+    void updateSizeConstraints();
+
+    /**
+     * @brief setter for the minimum size
+     * @ref minimumSize
+     */
+    void setMinimumSize(QSize);
 
     QSize m_size;
     QSize m_minSize;

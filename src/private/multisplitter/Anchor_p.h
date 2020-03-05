@@ -114,6 +114,9 @@ public:
     bool isFollowing() const { return m_followee != nullptr; }
     int thickness() const;
     bool isVertical() const { return m_orientation == Qt::Vertical; }
+    bool isEmpty() const { return !hasItems(Side1) && !hasItems(Side2); }
+    bool hasItems(Side) const;
+
     static int thickness(bool staticAnchor);
 
     /**
@@ -133,6 +136,10 @@ public:
     void setPosition(int) {}
     int position() const;
 
+    const ItemList items(Side side) const;
+    const ItemList side1Items() const { return m_side1Items; }
+    const ItemList side2Items() const { return m_side2Items; }
+
     /**
      * @brief Checks if this anchor is valid. It's valid if @ref from and @ref to are non-null, and not the same.
      * @return true if this anchor is valid.
@@ -142,12 +149,25 @@ public:
     int cumulativeMinLength(Anchor::Side side) const;
 
 private:
+
+    struct CumulativeMin {
+        int minLength;
+        int numItems;
+        CumulativeMin& operator+=(CumulativeMin other) {
+            minLength += other.minLength;
+            numItems += other.numItems;
+            return *this;
+        }
+    };
+    CumulativeMin cumulativeMinLength_recursive(Anchor::Side side) const;
+
     const Qt::Orientation m_orientation;
+    ItemList m_side1Items;
+    ItemList m_side2Items;
     const Type m_type;
     Anchor *m_followee = nullptr;
     QPointer<Anchor> m_from;// QPointer just so we can assert. They should never be null.
     QPointer<Anchor> m_to;
-
 };
 
 }

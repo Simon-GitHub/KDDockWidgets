@@ -423,9 +423,6 @@ Q_SIGNALS:
     ///@sa size
     void sizeChanged(QSize sz);
 
-    ///@brief emitted when the minimumSize changes
-    ///@sa minimumSize
-    void minimumSizeChanged(QSize);
 
 public:
     bool eventFilter(QObject *o, QEvent *e) override;
@@ -437,12 +434,7 @@ public:
     static const QString s_magicMarker;
     void ensureAnchorsBounded();
 private:
-    friend struct AnchorGroup;
-    friend class Item;
-    friend class Anchor;
-    friend class TestDocks;
-    friend class KDDockWidgets::Debug::DebugWindow;
-    friend class LayoutSaver;
+
 
     struct AnchorBounds {
         Anchor *side1;
@@ -457,11 +449,6 @@ private:
      */
     QRect rectForDrop(Length lengthForDrop, Location location, QRect relativeToRect) const;
 
-    /**
-     * @brief setter for the minimum size
-     * @ref minimumSize
-     */
-    void setMinimumSize(QSize);
 
     void emitVisibleWidgetCountChanged();
 
