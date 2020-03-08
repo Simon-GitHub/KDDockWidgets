@@ -159,7 +159,7 @@ KDDockWidgets::DockWidgetBase *MyMainWindow::newDockWidget()
     dock->setWidget(myWidget);
     dock->setTitle(QStringLiteral("DockWidget #%1").arg(count));
     dock->resize(600, 600);
-    dock->show();
+    //dock->show(); TODO
     m_toggleMenu->addAction(dock->toggleAction());
 
     count++;

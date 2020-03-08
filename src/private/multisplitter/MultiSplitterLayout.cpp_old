@@ -18,159 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "MultiSplitterLayout_p.h"
-#include "Logging_p.h"
-#include "MultiSplitter_p.h"
-#include "Frame_p.h"
-#include "FloatingWindow_p.h"
-#include "DockWidgetBase.h"
-#include "LastPosition_p.h"
-#include "DockRegistry_p.h"
-#include "Config.h"
-#include "Separator_p.h"
-#include "FrameworkWidgetFactory.h"
-#include "LayoutSaver.h"
-
-#include <QAction>
-#include <QEvent>
-#include <QtMath>
-#include <QScopedValueRollback>
-
-#define INDICATOR_MINIMUM_LENGTH 100
-#define KDDOCKWIDGETS_MIN_WIDTH 80
-#define KDDOCKWIDGETS_MIN_HEIGHT 90
-
-using namespace KDDockWidgets;
-
-const QString MultiSplitterLayout::s_magicMarker = QStringLiteral("bac9948e-5f1b-4271-acc5-07f1708e2611");
-
-static Qt::Orientation anchorOrientationForLocation(Location l)
-{
-    return (l == Location_OnLeft || l == Location_OnRight) ? Qt::Vertical
-                                                           : Qt::Horizontal;
-}
-
-MultiSplitterLayout::MultiSplitterLayout(MultiSplitter *parent)
-    : QObject(parent)
-    , m_multiSplitter(parent)
-    , m_leftAnchor(new Anchor(Qt::Vertical, this, Anchor::Type_LeftStatic))
-    , m_topAnchor(new Anchor(Qt::Horizontal, this, Anchor::Type_TopStatic))
-    , m_rightAnchor(new Anchor(Qt::Vertical, this, Anchor::Type_RightStatic))
-    , m_bottomAnchor(new Anchor(Qt::Horizontal, this, Anchor::Type_BottomStatic))
-    , m_staticAnchorGroup(this)
-{
-    Q_ASSERT(parent);
-
-    DockRegistry::self()->registerLayout(this);
-
-    setSize(parent->size());
-
-    qCDebug(multisplittercreation()) << "MultiSplitter";
-    connect(this, &MultiSplitterLayout::widgetCountChanged, this, [this] {
-        Q_EMIT visibleWidgetCountChanged(visibleCount());
-    });
-
-    m_leftAnchor->setObjectName(QStringLiteral("left"));
-    m_rightAnchor->setObjectName(QStringLiteral("right"));
-    m_bottomAnchor->setObjectName(QStringLiteral("bottom"));
-    m_topAnchor->setObjectName(QStringLiteral("top"));
-
-    m_leftAnchor->setFrom(m_topAnchor);
-    m_leftAnchor->setTo(m_bottomAnchor);
-    m_rightAnchor->setFrom(m_topAnchor);
-    m_rightAnchor->setTo(m_bottomAnchor);
-
-    m_topAnchor->setFrom(m_leftAnchor);
-    m_topAnchor->setTo(m_rightAnchor);
-    m_bottomAnchor->setFrom(m_leftAnchor);
-    m_bottomAnchor->setTo(m_rightAnchor);
-
-    m_staticAnchorGroup.left = m_leftAnchor;
-    m_staticAnchorGroup.right = m_rightAnchor;
-    m_staticAnchorGroup.top = m_topAnchor;
-    m_staticAnchorGroup.bottom = m_bottomAnchor;
-
-    clear();
-
-    positionStaticAnchors();
-
-    // Initialize min size
-    updateSizeConstraints();
-    m_inCtor = false;
-}
-
-MultiSplitterLayout::~MultiSplitterLayout()
-{
-    qCDebug(multisplittercreation) << "~MultiSplitter" << this;
-    m_inDestructor = true;
-    const auto anchors = m_anchors;
-    qDeleteAll(anchors);
-    DockRegistry::self()->unregisterLayout(this);
-}
-
-/**static*/
-QSize MultiSplitterLayout::hardcodedMinimumSize()
-{
-    return QSize(KDDOCKWIDGETS_MIN_WIDTH, KDDOCKWIDGETS_MIN_HEIGHT);
-}
-
-MultiSplitter *MultiSplitterLayout::multiSplitter() const
-{
-    return m_multiSplitter;
-}
-
-bool MultiSplitterLayout::validateInputs(QWidgetOrQuick *widget,
-                                         Location location,
-                                         const Frame *relativeToFrame, AddingOption option) const
-{
-    if (!widget) {
-        qWarning() << Q_FUNC_INFO << "Widget is null";
-        return false;
-    }
-
-    const bool isDockWidget = qobject_cast<DockWidgetBase*>(widget);
-    const bool isStartHidden = option & AddingOption_StartHidden;
-
-    if (!qobject_cast<Frame*>(widget) && !qobject_cast<MultiSplitter*>(widget) && !isDockWidget) {
-        qWarning() << "Unknown widget type" << widget;
-        return false;
-    }
-
-    if (isDockWidget != isStartHidden) {
-        qWarning() << "Wrong parameters" << isDockWidget << isStartHidden;
-        return false;
-    }
-
-    if (relativeToFrame && relativeToFrame == widget) {
-        qWarning() << "widget can't be relative to itself";
-        return false;
-    }
-
-    Item *item = itemForFrame(qobject_cast<Frame*>(widget));
-
-    if (contains(item)) {
-        qWarning() << "MultiSplitterLayout::addWidget: Already contains" << widget;
-        return false;
-    }// TODO: check for widget changing parent
-
-    if (location == Location_None) {
-        qWarning() << "MultiSplitterLayout::addWidget: not adding to location None";
-        return false;
-    }
-
-    const bool relativeToThis = relativeToFrame == nullptr;
-
-    Item *relativeToItem = itemForFrame(relativeToFrame);
-    if (!relativeToThis && !contains(relativeToItem)) {
-        qWarning() << "MultiSplitterLayout::addWidget: Doesn't contain relativeTo:"
-                   << relativeToFrame
-                   << "; options=" << option;
-        return false;
-    }
-
-    return true;
-}
-
 std::pair<int,int> MultiSplitterLayout::boundInterval(int newPos1, Anchor* anchor1, int newPos2, Anchor *anchor2) const
 {
     const int bound1 = boundPositionForAnchor(anchor1, Anchor::Side1);
@@ -604,19 +451,6 @@ void MultiSplitterLayout::ensureItemsMinSize()
     }
 }
 
-QString MultiSplitterLayout::affinityName() const
-{
-    if (auto ms = multiSplitter()) {
-        if (auto mainWindow = ms->mainWindow()) {
-            return mainWindow->affinityName();
-        } else if (auto fw = ms->floatingWindow()) {
-            return fw->affinityName();
-        }
-    }
-
-    return QString();
-}
-
 void MultiSplitterLayout::addMultiSplitter(MultiSplitter *sourceMultiSplitter,
                                            Location location,
                                            Frame *relativeTo)
@@ -642,85 +476,6 @@ void MultiSplitterLayout::removeItem(Item *item)
 
     Q_EMIT widgetRemoved(item);
     Q_EMIT widgetCountChanged(m_items.size());
-}
-
-bool MultiSplitterLayout::contains(const Item *item) const
-{
-    return m_items.contains(const_cast<Item*>(item));
-}
-
-bool MultiSplitterLayout::contains(const Frame *frame) const
-{
-    return itemForFrame(frame) != nullptr;
-}
-
-Item *MultiSplitterLayout::itemAt(QPoint p) const
-{
-    for (Item *item : m_items) {
-        if (!item->isPlaceholder() && item->geometry().contains(p))
-            return item;
-    }
-
-    return nullptr;
-}
-
-void MultiSplitterLayout::clear(bool alsoDeleteStaticAnchors)
-{
-    const int oldCount = count();
-    const int oldVisibleCount = visibleCount();
-    const auto items = m_items;
-    m_items.clear(); // Clear the item list first, do avoid ~Item() triggering a removal from the list
-    qDeleteAll(items);
-
-    const auto anchors = m_anchors;
-    m_anchors.clear();
-
-    for (Anchor *anchor : qAsConst(anchors)) {
-        anchor->clear();
-        if (!anchor->isStatic() || alsoDeleteStaticAnchors) {
-            delete anchor;
-        }
-    }
-
-    if (alsoDeleteStaticAnchors) {
-        m_anchors.clear();
-        m_topAnchor = nullptr;
-        m_bottomAnchor = nullptr;
-        m_leftAnchor = nullptr;
-        m_rightAnchor = nullptr;
-        m_staticAnchorGroup.left = nullptr;
-        m_staticAnchorGroup.top = nullptr;
-        m_staticAnchorGroup.right = nullptr;
-        m_staticAnchorGroup.bottom = nullptr;
-    } else {
-        m_anchors = { m_topAnchor, m_bottomAnchor, m_leftAnchor, m_rightAnchor };
-    }
-
-    if (oldCount > 0)
-        Q_EMIT widgetCountChanged(0);
-    if (oldVisibleCount > 0)
-        Q_EMIT visibleWidgetCountChanged(0);
-
-}
-
-int MultiSplitterLayout::visibleCount() const
-{
-    int count = 0;
-    for (auto item : m_items)
-        if (!item->isPlaceholder())
-            count++;
-    return count;
-}
-
-int MultiSplitterLayout::placeholderCount() const
-{
-    return count() - visibleCount();
-}
-
-void MultiSplitterLayout::removeAnchor(Anchor *anchor)
-{
-    if (!m_inDestructor)
-        m_anchors.removeOne(anchor);
 }
 
 QPair<int, int> MultiSplitterLayout::boundPositionsForAnchor(Anchor *anchor) const
@@ -987,17 +742,6 @@ int MultiSplitterLayout::numAchorsFollowing() const
     return count;
 }
 
-int MultiSplitterLayout::numVisibleAnchors() const
-{
-    int count = 0;
-    for (Anchor *a : m_anchors) {
-        if (a->separatorWidget()->isVisible())
-            count++;
-    }
-
-    return count;
-}
-
 Anchor *MultiSplitterLayout::staticAnchor(Anchor::Type type) const
 {
     if (type == Anchor::Type_TopStatic)
@@ -1080,15 +824,6 @@ void MultiSplitterLayout::dumpDebug() const
 
     qDebug() << "Num Frame:" << Frame::dbg_numFrames();
     qDebug() << "Num FloatingWindow:" << FloatingWindow::dbg_numFrames();
-}
-
-void MultiSplitterLayout::positionStaticAnchors()
-{
-    qCDebug(sizing) << Q_FUNC_INFO;
-    m_leftAnchor->setPosition(0);
-    m_topAnchor->setPosition(0);
-    m_bottomAnchor->setPosition(height() - m_bottomAnchor->thickness());
-    m_rightAnchor->setPosition(width() - m_rightAnchor->thickness());
 }
 
 void MultiSplitterLayout::redistributeSpace()
@@ -1849,15 +1584,6 @@ QHash<Anchor*, Anchor*> MultiSplitterLayout::anchorsShouldFollow() const
     return followers;
 }
 
-void MultiSplitterLayout::insertAnchor(Anchor *anchor)
-{
-    m_anchors.append(anchor);
-}
-
-const ItemList MultiSplitterLayout::items() const
-{
-    return m_items;
-}
 
 bool MultiSplitterLayout::eventFilter(QObject *o, QEvent *e)
 {

@@ -18,27 +18,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Anchor_p.h"
-#include "MultiSplitterLayout_p.h"
-#include "MultiSplitter_p.h"
-#include "Logging_p.h"
-#include "LayoutSaver.h"
-#include "Config.h"
-#include "Separator_p.h"
-#include "FrameworkWidgetFactory.h"
-
-#include <QRubberBand>
-#include <QApplication>
-#include <QDebug>
-
-#ifdef Q_OS_WIN
-# include <Windows.h>
-#endif
-
-using namespace KDDockWidgets;
 
 bool Anchor::s_isResizing = false;
-const QString Anchor::s_magicMarker = QStringLiteral("e520c60e-cf5d-4a30-b1a7-588d2c569851");
 
 Anchor::Anchor(Qt::Orientation orientation, MultiSplitterLayout *multiSplitter, Type type)
     : QObject(multiSplitter->multiSplitter())
@@ -48,33 +29,6 @@ Anchor::Anchor(Qt::Orientation orientation, MultiSplitterLayout *multiSplitter, 
     , m_lazyResize(Config::self().flags() & Config::Flag_LazyResize)
     , m_lazyResizeRubberBand(m_lazyResize ? new QRubberBand(QRubberBand::Line, multiSplitter->multiSplitter()) : nullptr)
 {
-    multiSplitter->insertAnchor(this);
-    connect(this, &QObject::objectNameChanged, m_separatorWidget, &QObject::setObjectName);
-}
-
-Anchor::~Anchor()
-{
-    m_separatorWidget->setEnabled(false);
-    m_separatorWidget->deleteLater();
-    qCDebug(multisplittercreation) << "~Anchor; this=" << this << "; m_to=" << m_to << "; m_from=" << m_from;
-    m_layout->removeAnchor(this);
-    for (Item *item : items(Side1))
-        item->anchorGroup().setAnchor(nullptr, m_orientation, Side1);
-    for (Item *item : items(Side2))
-        item->anchorGroup().setAnchor(nullptr, m_orientation, Side2);
-}
-
-void Anchor::updateSize()
-{
-    if (isValid()) {
-        if (isVertical()) {
-            setGeometry(QRect(position(), m_from->geometry().bottom() + 1, thickness(), length()));
-        } else {
-            setGeometry(QRect(m_from->geometry().right() + 1, position(), length(), thickness()));
-        }
-    }
-
-    qCDebug(anchors) << "Anchor::updateSize" << this << geometry();
 }
 
 void Anchor::updateItemSizes()
@@ -116,37 +70,6 @@ void Anchor::updateItemSizes()
             item->setGeometry(geo);
         }
     }
-}
-
-void Anchor::debug_updateItemNames()
-{
-    // I call this in the unit-tests, when running them on gammaray
-
-    m_debug_side1ItemNames.clear();
-    m_debug_side2ItemNames.clear();
-
-    for (Item *item : qAsConst(m_side1Items))
-        m_debug_side1ItemNames += item->objectName() + QStringLiteral("; ");
-
-    for (Item *item : qAsConst(m_side2Items))
-        m_debug_side2ItemNames += item->objectName() + QStringLiteral("; ");
-
-    Q_EMIT debug_itemNamesChanged();
-}
-
-QString Anchor::debug_side1ItemNames() const
-{
-    return m_debug_side1ItemNames;
-}
-
-QString Anchor::debug_side2ItemNames() const
-{
-    return m_debug_side2ItemNames;
-}
-
-Qt::Orientation Anchor::orientation() const
-{
-    return m_orientation;
 }
 
 void Anchor::setPosition(int p, SetPositionOptions options)
@@ -217,20 +140,6 @@ void Anchor::updatePositionPercentage()
     }
 }
 
-int Anchor::position() const
-{
-    const QPoint topLeft = m_geometry.topLeft();
-    return isVertical() ? topLeft.x() : topLeft.y();
-}
-
-void Anchor::setVisible(bool v)
-{
-    m_separatorWidget->setVisible(v);
-    if (v) {
-        m_separatorWidget->setGeometry(m_geometry);
-    }
-}
-
 int Anchor::minPosition() const
 {
     const int smallestSqueeze = smallestAvailableItemSqueeze(Side1);
@@ -273,57 +182,6 @@ void Anchor::ensureBounded()
     }
 }
 
-bool Anchor::isValid() const
-{
-    return m_to && m_from && m_to != m_from && m_to != this && m_from != this;
-}
-
-int Anchor::thickness() const
-{
-    return isVertical() ? m_separatorWidget->width()
-                        : m_separatorWidget->height();
-}
-
-
-bool Anchor::onlyHasPlaceholderItems(Anchor::Side side) const
-{
-    auto &items = side == Side1 ? m_side1Items
-                                : m_side2Items;
-
-    for (Item *item : items) {
-        if (!item->isPlaceholder())
-            return false;
-    }
-
-    return true;
-}
-
-bool Anchor::hasNonPlaceholderItems(Anchor::Side side) const
-{
-    auto &items = side == Side1 ? m_side1Items
-                                : m_side2Items;
-
-    for (Item *item : items) {
-        if (!item->isPlaceholder())
-            return true;
-    }
-
-    return false;
-}
-
-bool Anchor::containsItem(const Item *item, Anchor::Side side) const
-{
-    switch (side) {
-    case Side1:
-        return m_side1Items.contains(const_cast<Item *>(item));
-    case Side2:
-        return m_side2Items.contains(const_cast<Item *>(item));
-    default:
-        Q_ASSERT(false);
-        return false;
-    }
-}
-
 bool Anchor::isStaticOrFollowsStatic() const
 {
     if (isStatic())
@@ -332,18 +190,6 @@ bool Anchor::isStaticOrFollowsStatic() const
     return m_followee && m_followee->isStaticOrFollowsStatic();
 }
 
-const ItemList Anchor::items(Anchor::Side side) const
-{
-    switch (side) {
-    case Side1:
-        return m_side1Items;
-    case Side2:
-        return m_side2Items;
-    default:
-        Q_ASSERT(false);
-        return {};
-    }
-}
 
 void Anchor::consume(Anchor *other)
 {
@@ -386,11 +232,6 @@ void Anchor::swapItems(Anchor *other)
     addItems(other2, Side1);
 }
 
-void Anchor::removeAllItems()
-{
-    removeItems(Side1);
-    removeItems(Side2);
-}
 
 void Anchor::setPositionOffset(int value)
 {
@@ -504,21 +345,10 @@ Anchor *Anchor::findNearestAnchorWithItems(Anchor::Side side) const
     return candidate;
 }
 
-void Anchor::clear()
-{
-    m_side1Items.clear();
-    m_side2Items.clear();
-}
-
 void Anchor::onFolloweePositionChanged(int pos)
 {
     Q_ASSERT(isFollowing());
     setPosition(pos);
-}
-
-int Anchor::thickness(bool staticAnchor)
-{
-    return Config::self().separatorThickness(staticAnchor);
 }
 
 void Anchor::setLayout(MultiSplitterLayout *layout)
@@ -529,31 +359,6 @@ void Anchor::setLayout(MultiSplitterLayout *layout)
     m_separatorWidget->setParent(layout->multiSplitter());
     m_layout->insertAnchor(this);
     m_layout->setAnchorBeingDragged(nullptr);
-}
-
-Separator *Anchor::separatorWidget() const
-{
-    return m_separatorWidget;
-}
-
-void Anchor::setThickness()
-{
-    const int value = isFollowing() ? m_followee->thickness()
-                                    : thickness(isStatic());
-
-    const int oldValue = thickness();
-
-    if (value != oldValue) {
-        if (isVertical()) {
-            m_separatorWidget->setFixedWidth(value);
-            m_geometry.setWidth(value);
-        } else {
-            m_separatorWidget->setFixedHeight(value);
-            m_geometry.setHeight(value);
-        }
-
-        Q_EMIT thicknessChanged();
-    }
 }
 
 void Anchor::setLazyPosition(int pos)

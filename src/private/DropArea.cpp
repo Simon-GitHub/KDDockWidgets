@@ -132,9 +132,9 @@ void DropArea::addDockWidget(DockWidgetBase *dw, Location location, DockWidgetBa
     }
 
     if (option & AddingOption_StartHidden) {
-        //m_layout->addWidget(dw, location, relativeToFrame, option);
+        m_layout->addWidget(dw, location, relativeToFrame, option);
     } else {
-        //m_layout->addWidget(frame, location, relativeToFrame, option);
+        m_layout->addWidget(frame, location, relativeToFrame, option);
     }
 }
 
@@ -151,8 +151,7 @@ bool DropArea::checkSanity(MultiSplitterLayout::AnchorSanityOption o)
 
 bool DropArea::contains(DockWidgetBase *dw) const
 {
-//    return dw->frame() && m_layout->contains(dw->frame());
-    return false;
+    return dw->frame() && m_layout->contains(dw->frame());
 }
 
 QString DropArea::affinityName() const

@@ -28,8 +28,7 @@ public:
         , m_frame(frame)
         , m_geometry(m_frame->geometry())
     {
-        Q_ASSERT(m_frame);
-        setMinimumSize(frameMinSize());
+
     }
 
     // Overload ctor called when restoring a placeholder Item triggered by LayoutSaver::restore()
@@ -45,74 +44,11 @@ public:
     void turnIntoPlaceholder();
     void setIsPlaceholder(bool);
 
-    void updateObjectName();
-    void setMinimumSize(QSize);
-    Item *const q;
-    AnchorGroup m_anchorGroup;
-    Frame *m_frame = nullptr;
-    bool m_isPlaceholder = false;
-    QPointer<MultiSplitterLayout> m_layout;
-    QRect m_geometry;
-    QSize m_minSize;
-    bool m_destroying = false;
-    int m_refCount = 0;
     bool m_blockPropagateGeo = false;
     QMetaObject::Connection m_onFrameLayoutRequest_connection;
     QMetaObject::Connection m_onFrameDestroyed_connection;
     QMetaObject::Connection m_onFrameObjectNameChanged_connection;
 };
-
-Item::Item(Frame *frame, MultiSplitterLayout *parent)
-    : QObject(parent)
-    , d(new Private(this, frame, parent))
-{    
-    setLayout(parent);
-
-    // Minor hack: Set to nullptr so setFrame doesn't bail out. There's a catch-22: setLayout needs to have an m_frame and setFrame needs to have a layout.
-    d->m_frame = nullptr;
-    d->setFrame(frame);
-}
-
-Item::Item(MultiSplitterLayout *parent)
-    : QObject(parent)
-    , d(new Private(this, parent))
-{
-}
-
-Item::~Item()
-{
-    if (!d->m_destroying) {
-        d->m_destroying = true;
-        disconnect(d->m_onFrameDestroyed_connection);
-        delete d->m_frame;
-    }
-
-    if (d->m_layout) {
-        d->m_layout->removeItem(this);
-    }
-    delete d;
-}
-
-int Item::x() const
-{
-    return d->m_geometry.x();
-}
-
-int Item::y() const
-{
-    return d->m_geometry.y();
-}
-
-QPoint Item::pos() const
-{
-    return d->m_geometry.topLeft();
-}
-
-int Item::position(Qt::Orientation orientation) const
-{
-    return orientation == Qt::Vertical ? x()
-                                       : y();
-}
 
 void Item::setGeometry(QRect geo)
 {
@@ -252,32 +188,6 @@ Anchor *Item::anchor(const GeometryDiff &geoDiff) const
     return nullptr;
 }
 
-AnchorGroup& Item::anchorGroup()
-{
-    return d->m_anchorGroup;
-}
-
-const AnchorGroup &Item::anchorGroup() const
-{
-    return d->m_anchorGroup;
-}
-
-QSize Item::minimumSize() const
-{
-    return isPlaceholder() ? QSize(0, 0)
-                           : d->m_minSize;
-}
-
-QSize Item::actualMinSize() const
-{
-    return d->m_minSize;
-}
-
-bool Item::isPlaceholder() const
-{
-    return d->m_isPlaceholder;
-}
-
 void Item::setIsPlaceholder(bool is)
 {
     d->setIsPlaceholder(is);
@@ -370,14 +280,6 @@ void Item::onLayoutRequest() const
     }
 }
 
-void Item::Private::setMinimumSize(QSize sz)
-{
-    if (sz != m_minSize) {
-        m_minSize = sz;
-        Q_EMIT q->minimumSizeChanged();
-    }
-}
-
 void Item::restoreSizes(QSize minSize, QRect geometry)
 {
     d->m_minSize = minSize;
@@ -432,35 +334,6 @@ void Item::Private::setFrame(Frame *frame)
     }
 }
 
-void Item::ref()
-{
-    d->m_refCount++;
-    qCDebug(placeholder()) << Q_FUNC_INFO << "; new ref=" << d->m_refCount;
-}
-
-void Item::unref()
-{
-    if (d->m_refCount == 0) {
-        qWarning() << Q_FUNC_INFO << "refcount can't be 0";
-        return;
-    }
-
-    d->m_refCount--;
-    qCDebug(placeholder()) << Q_FUNC_INFO << "; new ref=" << d->m_refCount;
-
-    if (d->m_refCount == 0) {
-        if (!d->m_destroying) {
-            d->m_destroying = true;
-            delete this;
-        }
-    }
-}
-
-int Item::refCount() const
-{
-    return d->m_refCount;
-}
-
 void Item::Private::turnIntoPlaceholder()
 {
     qCDebug(placeholder) << Q_FUNC_INFO << this;
@@ -492,18 +365,6 @@ void Item::Private::setIsPlaceholder(bool is)
     }
 }
 
-void Item::Private::updateObjectName()
-{
-    if (m_frame && !m_frame->objectName().isEmpty()) {
-        q->setObjectName(m_frame->objectName());
-    } else if (q->isPlaceholder()) {
-        q->setObjectName(QStringLiteral("placeholder"));
-    } else if (!m_frame){
-        q->setObjectName(QStringLiteral("null frame"));
-    } else {
-        q->setObjectName(QStringLiteral("frame with no dockwidgets"));
-    }
-}
 
 Item *Item::deserialize(const LayoutSaver::Item &i, MultiSplitterLayout *layout)
 {

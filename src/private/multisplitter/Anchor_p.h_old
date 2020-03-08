@@ -83,41 +83,11 @@ typedef QVector<Item*> ItemList;
  */
 class DOCKS_EXPORT_FOR_UNIT_TESTS Anchor : public QObject // clazy:exclude=ctor-missing-parent-argument
 {
-    Q_OBJECT
-
-    // properties for GammaRay
-    Q_PROPERTY(KDDockWidgets::ItemList side1Items READ side1Items NOTIFY itemsChanged)
-    Q_PROPERTY(KDDockWidgets::ItemList side2Items READ side2Items NOTIFY itemsChanged)
-
-    Q_PROPERTY(QString debug_side1ItemNames READ debug_side1ItemNames NOTIFY debug_itemNamesChanged)
-    Q_PROPERTY(QString debug_side2ItemNames READ debug_side2ItemNames NOTIFY debug_itemNamesChanged)
 
     Q_PROPERTY(Anchor* from READ from WRITE setFrom NOTIFY fromChanged)
     Q_PROPERTY(Anchor* to READ to WRITE setTo NOTIFY toChanged)
-    Q_PROPERTY(int position READ position WRITE setPosition NOTIFY positionChanged)
-    Q_PROPERTY(Qt::Orientation orientation READ orientation CONSTANT)
     Q_PROPERTY(Anchor *followee READ followee NOTIFY followeeChanged)
 public:
-    ///@brief represents the Anchor type
-    ///An anchor can be of 2 types:
-    /// - Normal: Anchor that can be resized via mouse
-    /// - static: this is the top, left, right, bottom borders of the main window. They are called static because they don't move.
-    enum Type {
-        Type_None = 0, ///< The anchor is normal, and can be resized.
-        Type_LeftStatic = 1,   ///< The anchor is static and represents the left mainwindow margin
-        Type_RightStatic = 2,  ///< The anchor is static and represents the right mainwindow margin
-        Type_TopStatic = 4,    ///< The anchor is static and represents the top mainwindow margin
-        Type_BottomStatic = 8, ///< The anchor is static and represents the bottom mainwindow margin
-        Type_Static = Type_TopStatic | Type_LeftStatic | Type_RightStatic | Type_BottomStatic ///< The anchor is static, one of the 4 previous ones
-    };
-    Q_ENUM(Type)
-
-    enum Side {
-        Side_None = 0,
-        Side1,
-        Side2
-    };
-    Q_ENUM(Side)
 
     enum SetPositionOption {
         SetPositionOption_None = 0,
@@ -125,27 +95,9 @@ public:
     };
     Q_DECLARE_FLAGS(SetPositionOptions, SetPositionOption)
 
-    typedef QVector<Anchor *> List;
-    explicit Anchor(Qt::Orientation orientation, MultiSplitterLayout *multiSplitter, Type = Type_None);
-    ~Anchor() override;
     static Anchor* deserialize(const LayoutSaver::Anchor &, MultiSplitterLayout *layout);
     LayoutSaver::Anchor serialize() const;
-
-    void setFrom(Anchor *);
-    Anchor *from() const { return m_from; }
-    Anchor *to() const { return m_to; }
-    void setTo(Anchor *);
-    Qt::Orientation orientation() const;
-    void addItem(Item *, Side);
-    void addItems(const ItemList &list, Side);
-    void removeItem(Item *w);
-    void removeItems(Side);
-    bool isVertical() const { return m_orientation == Qt::Vertical; }
-    void setPosition(int p, SetPositionOptions = SetPositionOption_None);
     void updatePositionPercentage();
-    int position() const;
-
-    void setVisible(bool);
     qreal positionPercentage() const { return m_positionPercentage; }
 
     void ensureBounded();
@@ -174,27 +126,9 @@ public:
      */
     int smallestAvailableItemSqueeze(Anchor::Side) const;
 
-    /**
-     * @brief Checks if this anchor is valid. It's valid if @ref from and @ref to are non-null, and not the same.
-     * @return true if this anchor is valid.
-     */
-    bool isValid() const;
-
-    /**
-     * @brief The width of a vertical anchor, or height of an horizontal anchor.
-     */
-    int thickness() const;
-
-    /**
-     * @brief Checks if this Anchor is static.
-     * @return true if this Anchor is static.
-     */
-    bool isStatic() const { return m_type & Type_Static; }
 
     bool isUnneeded() const { return !isStatic() && (!hasItems(Side1) || !hasItems(Side2)); }
-    bool isEmpty() const { return !hasItems(Side1) && !hasItems(Side2); }
-    bool hasNonPlaceholderItems(Side) const;
-    bool onlyHasPlaceholderItems(Anchor::Side side) const;
+
 
     /**
      * @brief Returns whether this Anchor should follow another one. That happens if one of it's side is empty or only has placeholders
@@ -202,19 +136,12 @@ public:
      */
     bool shouldFollow() const { return !isStatic() && (onlyHasPlaceholderItems(Side1) || onlyHasPlaceholderItems(Side2)); }
 
-    bool containsItem(const Item *w, Side side) const;
     bool isStaticOrFollowsStatic() const;
-
-    const ItemList items(Side side) const;
-    const ItemList side1Items() const { return m_side1Items; }
-    const ItemList side2Items() const { return m_side2Items; }
 
     void consume(Anchor *other);
     void consume(Anchor *other, Side);
     void swapItems(Anchor *other);
-    void removeAllItems();
 
-    static Anchor *createFrom(Anchor *other, Item *relativeTo = nullptr);
     void setPositionOffset(int);
     bool isBeingDragged() const;
 
@@ -260,13 +187,8 @@ public:
      */
     Anchor *findNearestAnchorWithItems(Side side) const;
 
-    ///@brief removes the side1 and side2 items. Doesn't delete them
-    void clear();
-
-    static int thickness(bool staticAnchor);
     static Anchor::Side oppositeSide(Side side);
     void onFolloweePositionChanged(int pos);
-    bool isFollowing() const { return m_followee != nullptr; }
 
     void onMousePress();
     void onMouseReleased();
@@ -289,7 +211,6 @@ private:
     };
     CumulativeMin cumulativeMinLength_recursive(Anchor::Side side) const;
 
-    void setThickness();
     void setLazyPosition(int);
 
 Q_SIGNALS:
@@ -305,35 +226,20 @@ public:
     int position(QPoint) const;
 
     void updateItemSizes();
-    void debug_updateItemNames();
-    QString debug_side1ItemNames() const;
-    QString debug_side2ItemNames() const;
 
-    const Qt::Orientation m_orientation;
-    ItemList m_side1Items;
-    ItemList m_side2Items;
-    QPointer<Anchor> m_from;// QPointer just so we can assert. They should never be null.
-    QPointer<Anchor> m_to;
-    const Type m_type;
     qreal m_positionPercentage = 0.0; // Should be between 0 and 1
 
     // Only set when anchor is moved through mouse. Side1 if going towards left or top, Side2 otherwise.
     Side m_lastMoveDirection = Side_None;
 
-    MultiSplitterLayout *m_layout = nullptr;
     bool m_showingSide1Rubberband = false;
     bool m_showingSide2Rubberband = false;
     bool m_initialized = false;
     static bool s_isResizing;
-    static const QString s_magicMarker; // Just to validate serialize is symmetric to deserialize
 
     // For when being animated. They are not displayed at their pos, but with an offset.
     int m_positionOffset = 0;
 
-    QString m_debug_side1ItemNames;
-    QString m_debug_side2ItemNames;
-
-    Anchor *m_followee = nullptr;
     QMetaObject::Connection m_followeeDestroyedConnection;
     const bool m_lazyResize;
     int m_lazyPosition = 0;

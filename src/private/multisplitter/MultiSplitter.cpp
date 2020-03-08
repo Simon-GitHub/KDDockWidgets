@@ -42,14 +42,14 @@ MultiSplitter::MultiSplitter(QWidgetOrQuick *parent)
     : QWidgetAdapter(parent)
     , m_layout(new MultiSplitterLayout(this))
 {
-    /*connect(m_layout, &MultiSplitterLayout::minimumSizeChanged, this, [this] (QSize sz) {
+    connect(m_layout, &MultiSplitterLayout::minimumSizeChanged, this, [this] (QSize sz) {
         setMinimumSize(sz);
     });
 
     connect(m_layout, &MultiSplitterLayout::sizeChanged, this, [this] (QSize sz) {
         if (!m_inResizeEvent && !LayoutSaver::restoreInProgress())
             resize(sz);
-    });*/
+    });
 
     setMinimumSize(m_layout->minimumSize());
 }
@@ -75,10 +75,10 @@ bool MultiSplitter::onResize(QSize newSize)
 
     QScopedValueRollback<bool>(m_inResizeEvent, true); // to avoid re-entrancy
 
-   /* if (!LayoutSaver::restoreInProgress()) {
+    if (!LayoutSaver::restoreInProgress()) {
         // don't resize anything while we're restoring the layout
         m_layout->setSize(newSize);
-    } TODO*/
+    }
 
     return false; // So QWidget::resizeEvent is called
 }

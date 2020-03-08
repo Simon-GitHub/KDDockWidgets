@@ -41,6 +41,9 @@ class AnchorGroup;
 class DOCKS_EXPORT_FOR_UNIT_TESTS Item : public QObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
+    Q_PROPERTY(bool isPlaceholder READ isPlaceholder NOTIFY isPlaceholderChanged)
+    Q_PROPERTY(QRect geometry READ geometry NOTIFY geometryChanged)
+    Q_PROPERTY(QSize minimumSize READ minimumSize NOTIFY minimumSizeChanged)
 public:
     /// @brief constructs a new layout item to show @p Frame in the layout @layout
     /// @param frame This is never nullptr.
@@ -61,18 +64,24 @@ public:
 
     bool isPlaceholder() const { return false; }
     QRect geometry() const;
-    QSize minimumSize() const { return QSize(); }
+    QSize minimumSize() const;
     int length(Qt::Orientation) const;
     int minLength(Qt::Orientation orientation) const;
     bool isVisible() const;
     void setVisible(bool);
+    void setPos(int p, Qt::Orientation, Anchor::Side);
+    int x() const;
+    int y() const;
+    QPoint pos() const;
+    int position(Qt::Orientation) const;
 
     AnchorGroup& anchorGroup();
     const AnchorGroup& anchorGroup() const;
     MultiSplitterLayout *layout() const;
     int height() const;
     int width() const;
-    QSize size() const { return QSize(); }
+    QSize size() const;
+    void commit() const;
 
     bool isInMainWindow() const; // TODO: Make main window agnostic
     void restoreSizes(QSize minSize, QRect geometry) {} // Just for LayoutSaver::restore. // TODO Check if needed
@@ -86,6 +95,7 @@ Q_SIGNALS:
     void minimumSizeChanged();
 
 private:
+    QSize actualMinSize() const; // The min size, regardless if it's a placeholder or not, so we can save the actual value while LayoutSaver::saveLayout
     class Private;
     Private *const d;
 };

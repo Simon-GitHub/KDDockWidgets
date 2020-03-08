@@ -39,21 +39,33 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     explicit AnchorGroup(MultiSplitterLayout *);
 
     bool isValid() const;
-    QSize itemSize() const { return {}; } // TODO: Check if needed
+    int width() const;
+    int height() const;
+
+    /**
+     * @brief Returns the size of an item that would be inside these 4 anchors
+     * @sa width(), height()
+     */
+    QSize size() const;
 
     Anchor *anchorAtSide(Anchor::Side side, Qt::Orientation orientation) const;
     void setAnchor(Anchor *anchor, Location loc);
     void setAnchor(Anchor *a, Qt::Orientation orientation, Anchor::Side side);
     Anchor *createAnchorFrom(KDDockWidgets::Location fromAnchorLocation, Item *relativeTo);
     Anchor *anchor(KDDockWidgets::Location) const;
+    Anchor *oppositeAnchor(Anchor *a) const;
     void addItem(Item *item);
+
+    bool isStatic() const;
 
     Anchor *left = nullptr;
     Anchor *top = nullptr;
     Anchor *right = nullptr;
     Anchor *bottom = nullptr;
 
-    QDebug debug(QDebug d) const {}
+    QDebug debug(QDebug d) const {
+        return d;
+    }
 
     MultiSplitterLayout *m_layout = nullptr;
 };

@@ -33,7 +33,22 @@ AnchorGroup::AnchorGroup(MultiSplitterLayout *layout)
 
 bool AnchorGroup::isValid() const
 {
-     return top && left && bottom && right;
+    return top && left && bottom && right;
+}
+
+int AnchorGroup::width() const
+{
+    return right->position() - left->position() - left->thickness() - 1;
+}
+
+int AnchorGroup::height() const
+{
+    return bottom->position() - top->position() - bottom->thickness() - 1;
+}
+
+QSize AnchorGroup::size() const
+{
+    return { width(), height() };
 }
 
 Anchor *AnchorGroup::anchorAtSide(Anchor::Side side, Qt::Orientation orientation) const
@@ -134,6 +149,20 @@ Anchor *AnchorGroup::anchor(Location loc) const
     }
 }
 
+Anchor *AnchorGroup::oppositeAnchor(Anchor *a) const
+{
+    if (a == left)
+        return right;
+    if (a == right)
+        return left;
+    if (a == top)
+        return bottom;
+    if (a == bottom)
+        return top;
+
+    return nullptr;
+}
+
 void AnchorGroup::addItem(Item *item)
 {
     // Dropping a single dockwidget, without any nesting
@@ -141,4 +170,9 @@ void AnchorGroup::addItem(Item *item)
     top->addItem(item, Anchor::Side2);
     right->addItem(item, Anchor::Side1);
     bottom->addItem(item, Anchor::Side1);
+}
+
+bool AnchorGroup::isStatic() const
+{
+    return top->isStatic() && bottom->isStatic() && left->isStatic() && right->isStatic();
 }

@@ -160,16 +160,6 @@ public:
     void removeItem(Item *item);
 
     /**
-     * @brief Returns true if this layout contains the specified item.
-     */
-    bool contains(const Item *) const;
-
-    /**
-     * @brief  Returns true if this layout contains the specified frame.
-     */
-    bool contains(const Frame *) const;
-
-    /**
      * @brief Returns the visible Item at pos @p p.
      */
     Item *itemAt(QPoint p) const;
@@ -308,7 +298,7 @@ public:
     QSize size() const { return m_size; }
 
     // For debug/hardening
-    bool validateInputs(QWidgetOrQuick *widget, KDDockWidgets::Location location, const Frame *relativeToFrame, AddingOption option) const;
+
     // For debug/hardening
 
     enum AnchorSanityOption {
@@ -471,10 +461,6 @@ private:
     void ensureEnoughSize(const QWidgetOrQuick *widget, KDDockWidgets::Location location,
                                   const Item *relativeToItem);
 
-
-    void insertAnchor(Anchor *);
-    void removeAnchor(Anchor *);
-
     /**
      * Returns the min or max position that an anchor can go to (due to minimum size restriction on the widgets).
      * For example, if the anchor is vertical and direction is Side1 then it returns the minimum x
@@ -522,13 +508,6 @@ private:
     QHash<Anchor *, Anchor *> anchorsShouldFollow() const;
 
     /**
-     * Positions the static anchors at their correct places. Called when the MultiSplitter is resized.
-     * left and top anchor are at position 0, while right/bottom are at position= width/height.
-     * (Approx, due to styling margins and whatnot)
-     */
-    void positionStaticAnchors();
-
-    /**
      * When this MultiSplitter is resized, it gives or steals the less/extra space evenly through
      * all widgets.
      **/
@@ -569,60 +548,13 @@ private:
     bool isRestoringPlaceholder() const { return m_restoringPlaceholder; }
     bool isAddingItem() const { return m_addingItem; }
 
-    QString affinityName() const;
-
-    MultiSplitter *const m_multiSplitter;
-    Anchor::List m_anchors;
-
-    Anchor *m_leftAnchor = nullptr;
-    Anchor *m_topAnchor = nullptr;
-    Anchor *m_rightAnchor = nullptr;
-    Anchor *m_bottomAnchor = nullptr;
-
-    ItemList m_items;
-    bool m_inCtor = true;
-    bool m_inDestructor = false;
     bool m_beingMergedIntoAnotherMultiSplitter = false;
     bool m_restoringPlaceholder = false;
     bool m_resizing = false;
     bool m_addingItem = false;
 
-    QSize m_minSize = QSize(0, 0);
-    AnchorGroup m_staticAnchorGroup;
     QPointer<Anchor> m_anchorBeingDragged;
-    QSize m_size;
 };
-
-inline QDebug operator<<(QDebug d, const AnchorGroup &group) {
-    d << "AnchorGroup: top=" << group.top << "; left=" << group.left
-      << "; right=" << group.right << "; bottom=" << group.bottom;
-    return d;
-}
-
-/**
- * Returns the widget's min-width if orientation is Vertical, the min-height otherwise.
- */
-inline int widgetMinLength(const QWidgetOrQuick *w, Qt::Orientation orientation)
-{
-    int min = 0;
-    if (orientation == Qt::Vertical) {
-        if (w->minimumWidth() > 0)
-            min = w->minimumWidth();
-        else
-            min = w->minimumSizeHint().width();
-
-        min = qMax(MultiSplitterLayout::hardcodedMinimumSize().width(), min);
-    } else {
-        if (w->minimumHeight() > 0)
-            min = w->minimumHeight();
-        else
-            min = w->minimumSizeHint().height();
-
-        min = qMax(MultiSplitterLayout::hardcodedMinimumSize().height(), min);
-    }
-
-    return qMax(min, 0);
-}
 
 }
 

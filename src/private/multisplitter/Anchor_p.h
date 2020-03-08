@@ -85,6 +85,13 @@ class DOCKS_EXPORT_FOR_UNIT_TESTS Anchor : public QObject // clazy:exclude=ctor-
 {
     Q_OBJECT
 
+    // properties for GammaRay
+    Q_PROPERTY(int position READ position WRITE setPosition NOTIFY positionChanged)
+    Q_PROPERTY(Qt::Orientation orientation READ orientation CONSTANT)
+    Q_PROPERTY(KDDockWidgets::ItemList side1Items READ side1Items NOTIFY itemsChanged)
+    Q_PROPERTY(KDDockWidgets::ItemList side2Items READ side2Items NOTIFY itemsChanged)
+    Q_PROPERTY(QString debug_side1ItemNames READ debug_side1ItemNames NOTIFY debug_itemNamesChanged)
+    Q_PROPERTY(QString debug_side2ItemNames READ debug_side2ItemNames NOTIFY debug_itemNamesChanged)
 public:
     typedef QVector<Anchor *> List;
 
@@ -110,6 +117,8 @@ public:
     Q_ENUM(Side)
 
     explicit Anchor(Qt::Orientation orientation, MultiSplitterLayout *layout, Type = Type_None);
+    ~Anchor();
+
     bool isStatic() const { return m_type & Type_Static; }
     bool isFollowing() const { return m_followee != nullptr; }
     int thickness() const;
@@ -129,6 +138,9 @@ public:
      */
     Anchor *endFollowee() const;
 
+    ///@brief removes the side1 and side2 items. Doesn't delete them
+    void clear();
+
     /**
      * @brief getter for the followee
      */
@@ -140,8 +152,9 @@ public:
     Anchor *to() const { return m_to; }
     void setTo(Anchor *);
 
-    void setPosition(int) {}
+    void setPosition(int);
     int position() const;
+    void commit();
 
     const ItemList items(Side side) const;
     const ItemList side1Items() const { return m_side1Items; }
@@ -161,6 +174,8 @@ public:
      */
     int length() const;
 
+    Separator *separatorWidget() const;
+
     static Anchor *createFrom(Anchor *other, Item *relativeTo = nullptr);
     static int thickness(bool staticAnchor);
 
@@ -174,6 +189,10 @@ Q_SIGNALS:
     void thicknessChanged();
 
 private:
+    void debug_updateItemNames();
+    QString debug_side1ItemNames() const;
+    QString debug_side2ItemNames() const;
+    void setThickness(); // TODO: check if used
     void updateSize();
     QRect geometry() const { return m_geometry; }
     void setGeometry(QRect);
@@ -201,6 +220,8 @@ private:
     Separator *const m_separatorWidget;
     QPointer<Anchor> m_from;// QPointer just so we can assert. They should never be null.
     QPointer<Anchor> m_to;
+    QString m_debug_side1ItemNames;
+    QString m_debug_side2ItemNames;
 };
 
 }

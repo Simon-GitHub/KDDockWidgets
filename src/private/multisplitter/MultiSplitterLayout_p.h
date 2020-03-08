@@ -58,10 +58,15 @@ class MultiSplitter;
 class DOCKS_EXPORT_FOR_UNIT_TESTS MultiSplitterLayout : public QObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
+    Q_PROPERTY(int count READ count NOTIFY widgetCountChanged)
+    Q_PROPERTY(int visibleCount READ visibleCount NOTIFY widgetCountChanged) // This notify isn't ogood enough, but it's just for debug, we're calling QMetaProperty::read to debug
+    Q_PROPERTY(int placeholderCount READ placeholderCount NOTIFY widgetCountChanged) // This notify isn't ogood enough, but it's just for debug, we're calling QMetaProperty::read to debug
+    Q_PROPERTY(QSize size READ size NOTIFY sizeChanged)
+    Q_PROPERTY(QSize minimumSize READ minimumSize NOTIFY minimumSizeChanged)
 
 public:
-
     explicit MultiSplitterLayout(MultiSplitter*);
+    ~MultiSplitterLayout();
 
     const ItemList items() const;
     int count() const { return m_items.size(); }
@@ -169,9 +174,7 @@ public:
     int numAnchorsFollowing() const;
 
     ///@brief returns the number of anchors that are following others, just for tests.
-    int numVisibleAnchors() const {
-        return -1;
-    }
+    int numVisibleAnchors() const;
 
     // For debug
     void dumpDebug() const;
@@ -190,7 +193,7 @@ public:
      * @sa contentsHeight, contentsWidth
      */
     int length(Qt::Orientation o) const {
-        return -1;
+        return lengthFromSize(size(), o);
     }
 
     /**
@@ -213,6 +216,28 @@ public:
 
     ///@brief Returns the multisplitter widget
     MultiSplitter* multiSplitter() const;
+
+    /**
+     * Positions the static anchors at their correct places. Called when the MultiSplitter is resized.
+     * left and top anchor are at position 0, while right/bottom are at position= width/height.
+     * (Approx, due to styling margins and whatnot)
+     */
+    void positionStaticAnchors();
+
+    /**
+     * @brief Returns true if this layout contains the specified item.
+     */
+    bool contains(const Item *) const;
+
+    /**
+     * @brief  Returns true if this layout contains the specified frame.
+     */
+    bool contains(const Frame *) const;
+
+    void insertAnchor(Anchor *);
+    void removeAnchor(Anchor *);
+
+    QString affinityName() const;
 
 Q_SIGNALS: // TODO: Check if all used
 
@@ -242,7 +267,6 @@ Q_SIGNALS: // TODO: Check if all used
     ///@sa size
     void sizeChanged(QSize sz);
 private:
-
     // TODO: Review friends
     friend struct AnchorGroup;
     friend class Item;
@@ -251,12 +275,15 @@ private:
     friend class KDDockWidgets::Debug::DebugWindow;
     friend class LayoutSaver;
 
+    // for debugging
+    bool validateInputs(QWidgetOrQuick *widget, KDDockWidgets::Location location, const Frame *relativeToFrame, AddingOption option) const;
+
     Item *itemForFrame(const Frame *frame) const;
 
     ///@brief a function that all code paths adding Items will call.
     ///It's mostly for code reuse, so we don't duplicate what's done here. But it's also nice to
     ///have a central place that we know will be called
-    void addItems_internal(const ItemList &, bool updateConstraints = true, bool emitSignal = true);
+    void addItems_internal(const ItemList &, bool emitSignal = true);
     /**
      * Removes the widgets associated with oldAnchor and gives them to newAnchor.
      * Called when removing a widget results in unneeded anchors.
@@ -285,6 +312,13 @@ private:
      */
     void updateSizeConstraints();
 
+    ///@brief lays all items, ensuring minsizes are respected
+    void layoutItems();
+
+    void layoutItems_recursive(Anchor *fromAnchor, Anchor *toAnchor);
+
+    void commit();
+
     /**
      * @brief setter for the minimum size
      * @ref minimumSize
@@ -296,12 +330,14 @@ private:
     Anchor::List m_anchors;
 
     MultiSplitter *const m_multiSplitter;
-    Anchor *const m_leftAnchor = nullptr;
-    Anchor *const m_topAnchor = nullptr;
-    Anchor *const m_rightAnchor = nullptr;
-    Anchor *const m_bottomAnchor = nullptr;
+    Anchor *m_leftAnchor = nullptr;
+    Anchor *m_topAnchor = nullptr;
+    Anchor *m_rightAnchor = nullptr;
+    Anchor *m_bottomAnchor = nullptr;
     ItemList m_items;
     AnchorGroup m_staticAnchorGroup;
+    bool m_inCtor = false; // TODO: Check if needed
+    bool m_inDestructor = false;
 };
 
 }

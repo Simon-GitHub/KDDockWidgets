@@ -43,12 +43,26 @@ Anchor::Anchor(Qt::Orientation orientation, MultiSplitterLayout *layout, Anchor:
     , m_layout(layout)
     , m_separatorWidget(Config::self().frameworkWidgetFactory()->createSeparator(this, layout->multiSplitter()))
 {
+    layout->insertAnchor(this);
+    connect(this, &QObject::objectNameChanged, m_separatorWidget, &QObject::setObjectName);
+}
 
+Anchor::~Anchor()
+{
+    m_separatorWidget->setEnabled(false);
+    m_separatorWidget->deleteLater();
+    qCDebug(multisplittercreation) << "~Anchor; this=" << this << "; m_to=" << m_to << "; m_from=" << m_from;
+    m_layout->removeAnchor(this);
+    for (Item *item : items(Side1))
+        item->anchorGroup().setAnchor(nullptr, m_orientation, Side1);
+    for (Item *item : items(Side2))
+        item->anchorGroup().setAnchor(nullptr, m_orientation, Side2);
 }
 
 int Anchor::thickness() const
 {
-    return 1;
+    return isVertical() ? m_separatorWidget->width()
+                        : m_separatorWidget->height();
 }
 
 bool Anchor::hasItems(Anchor::Side side) const
@@ -87,11 +101,6 @@ Qt::Orientation Anchor::orientation() const
     return m_orientation;
 }
 
-int Anchor::position() const
-{
-    return -1;
-}
-
 const ItemList Anchor::items(Anchor::Side side) const
 {
     switch (side) {
@@ -107,7 +116,7 @@ const ItemList Anchor::items(Anchor::Side side) const
 
 bool Anchor::isValid() const
 {
-    return false;
+    return m_to && m_from && m_to != m_from && m_to != this && m_from != this;
 }
 
 int Anchor::cumulativeMinLength(Anchor::Side side) const
@@ -307,6 +316,32 @@ void Anchor::setTo(Anchor *to)
     Q_EMIT toChanged();
 }
 
+void Anchor::setPosition(int p)
+{
+    if (p != position()) {
+        if (isVertical()) {
+            m_geometry.moveLeft(p);
+        } else {
+            m_geometry.moveTop(p);
+        }
+        Q_EMIT positionChanged(p);
+    }
+}
+
+int Anchor::position() const
+{
+    return isVertical() ? m_geometry.x()
+                        : m_geometry.y();
+}
+
+void Anchor::commit()
+{
+    const bool visible = !isFollowing();
+    m_separatorWidget->setVisible(visible);
+    if (visible)
+        m_separatorWidget->setGeometry(m_geometry);
+}
+
 void Anchor::updateSize()
 {
     if (isValid()) {
@@ -327,6 +362,11 @@ int Anchor::length() const
     return m_to->position() - m_from->position();
 }
 
+Separator *Anchor::separatorWidget() const
+{
+    return m_separatorWidget;
+}
+
 void Anchor::setGeometry(QRect r)
 {
     if (r != m_geometry) {
@@ -337,5 +377,57 @@ void Anchor::setGeometry(QRect r)
 
         m_geometry = r;
         m_separatorWidget->setGeometry(r);
+    }
+}
+
+void Anchor::clear()
+{
+    m_side1Items.clear();
+    m_side2Items.clear();
+}
+
+void Anchor::debug_updateItemNames()
+{
+    // I call this in the unit-tests, when running them on gammaray
+
+    m_debug_side1ItemNames.clear();
+    m_debug_side2ItemNames.clear();
+
+    for (Item *item : qAsConst(m_side1Items))
+        m_debug_side1ItemNames += item->objectName() + QStringLiteral("; ");
+
+    for (Item *item : qAsConst(m_side2Items))
+        m_debug_side2ItemNames += item->objectName() + QStringLiteral("; ");
+
+    Q_EMIT debug_itemNamesChanged();
+}
+
+QString Anchor::debug_side1ItemNames() const
+{
+    return m_debug_side1ItemNames;
+}
+
+QString Anchor::debug_side2ItemNames() const
+{
+    return m_debug_side2ItemNames;
+}
+
+void Anchor::setThickness()
+{
+    const int value = isFollowing() ? m_followee->thickness()
+                                    : thickness(isStatic());
+
+    const int oldValue = thickness();
+
+    if (value != oldValue) {
+        if (isVertical()) {
+            m_separatorWidget->setFixedWidth(value);
+            m_geometry.setWidth(value);
+        } else {
+            m_separatorWidget->setFixedHeight(value);
+            m_geometry.setHeight(value);
+        }
+
+        Q_EMIT thicknessChanged();
     }
 }

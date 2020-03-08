@@ -40,6 +40,8 @@ public:
         , m_frame(frame)
         , m_anchorGroup(layout)
     {
+        Q_ASSERT(m_frame);
+        setMinimumSize(frameMinSize());
     }
 
     QSize frameMinSize() const
@@ -49,14 +51,40 @@ public:
     }
 
     void setFrame(Frame *frame);
+    void setMinimumSize(QSize);
+    void updateObjectName();
 
     Item *const q;
     QRect m_geometry;
-    MultiSplitterLayout *m_layout = nullptr;
+    QSize m_minSize;
+    QPointer<MultiSplitterLayout> m_layout = nullptr;
     Frame *m_frame = nullptr;
     AnchorGroup m_anchorGroup;
+    bool m_destroying = false;
+    bool m_isPlaceholder = false;
+    int m_refCount = 0;
 };
 
+void Item::Private::setMinimumSize(QSize sz)
+{
+    if (sz != m_minSize) {
+        m_minSize = sz;
+        Q_EMIT q->minimumSizeChanged();
+    }
+}
+
+void Item::Private::updateObjectName()
+{
+    if (m_frame && !m_frame->objectName().isEmpty()) {
+        q->setObjectName(m_frame->objectName());
+    } else if (q->isPlaceholder()) {
+        q->setObjectName(QStringLiteral("placeholder"));
+    } else if (!m_frame){
+        q->setObjectName(QStringLiteral("null frame"));
+    } else {
+        q->setObjectName(QStringLiteral("frame with no dockwidgets"));
+    }
+}
 
 Item::Item(Frame *frame, MultiSplitterLayout *layout)
     : QObject(layout)
@@ -71,6 +99,16 @@ Item::Item(Frame *frame, MultiSplitterLayout *layout)
 
 Item::~Item()
 {
+    if (!d->m_destroying) {
+        d->m_destroying = true;
+        //disconnect(d->m_onFrameDestroyed_connection); TODO
+        delete d->m_frame;
+    }
+
+    if (d->m_layout) {
+        d->m_layout->removeItem(this);
+    }
+    delete d;
 }
 
 Frame *Item::frame() const
@@ -80,15 +118,31 @@ Frame *Item::frame() const
 
 void Item::ref()
 {
+    d->m_refCount++;
+    qCDebug(placeholder()) << Q_FUNC_INFO << "; new ref=" << d->m_refCount;
 }
 
 void Item::unref()
 {
+    if (d->m_refCount == 0) {
+        qWarning() << Q_FUNC_INFO << "refcount can't be 0";
+        return;
+    }
+
+    d->m_refCount--;
+    qCDebug(placeholder()) << Q_FUNC_INFO << "; new ref=" << d->m_refCount;
+
+    if (d->m_refCount == 0) {
+        if (!d->m_destroying) {
+            d->m_destroying = true;
+            delete this;
+        }
+    }
 }
 
 int Item::refCount() const
 {
-    return 0;
+    return d->m_refCount;
 }
 
 QRect Item::geometry() const
@@ -124,6 +178,19 @@ int Item::height() const
 int Item::width() const
 {
     return size().width();
+}
+
+QSize Item::size() const
+{
+    return d->m_geometry.size();
+}
+
+void Item::commit() const
+{
+    if (isPlaceholder())
+        return;
+
+    d->m_frame->setGeometry(d->m_geometry);
 }
 
 bool Item::isInMainWindow() const
@@ -176,6 +243,23 @@ void Item::setVisible(bool v)
     d->m_frame->setVisible(v);
 }
 
+void Item::setPos(int p, Qt::Orientation orientation, Anchor::Side side)
+{
+    if (orientation == Qt::Vertical) {
+        if (side == Anchor::Side1) {
+            d->m_geometry.setLeft(p);
+        } else {
+            d->m_geometry.setRight(p);
+        }
+    } else {
+        if (side == Anchor::Side1) {
+            d->m_geometry.setTop(p);
+        } else {
+            d->m_geometry.setBottom(p);
+        }
+    }
+}
+
 void Item::setLayout(MultiSplitterLayout *m)
 {
     Q_ASSERT(m);
@@ -194,4 +278,35 @@ void Item::Private::setFrame(Frame *frame)
 
     m_frame = frame;
     Q_EMIT q->frameChanged();
+}
+
+int Item::x() const
+{
+    return d->m_geometry.x();
+}
+
+int Item::y() const
+{
+    return d->m_geometry.y();
+}
+
+QPoint Item::pos() const
+{
+    return d->m_geometry.topLeft();
+}
+
+int Item::position(Qt::Orientation orientation) const
+{
+    return orientation == Qt::Vertical ? x() : y();
+}
+
+QSize Item::minimumSize() const
+{
+    return isPlaceholder() ? QSize(0, 0)
+                           : d->m_minSize;
+}
+
+QSize Item::actualMinSize() const
+{
+    return d->m_minSize;
 }

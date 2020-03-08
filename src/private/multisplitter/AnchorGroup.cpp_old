@@ -111,20 +111,6 @@ AnchorGroup AnchorGroup::outterGroup() const
     return group;
 }
 
-Anchor *AnchorGroup::oppositeAnchor(Anchor *a) const
-{
-    if (a == left)
-        return right;
-    if (a == right)
-        return left;
-    if (a == top)
-        return bottom;
-    if (a == bottom)
-        return top;
-
-    return nullptr;
-}
-
 Anchor *AnchorGroup::createAnchorFrom(Location fromAnchorLocation, Item *relativeTo)
 {
     Anchor *other = anchor(fromAnchorLocation);
@@ -158,23 +144,6 @@ Anchor *AnchorGroup::createAnchorFrom(Location fromAnchorLocation, Item *relativ
     }
 
     return anchor;
-}
-
-Anchor *AnchorGroup::anchor(Location loc) const
-{
-    switch (loc) {
-    case KDDockWidgets::Location_OnLeft:
-        return left;
-    case KDDockWidgets::Location_OnTop:
-        return top;
-    case KDDockWidgets::Location_OnRight:
-        return right;
-    case KDDockWidgets::Location_OnBottom:
-        return bottom;
-    default:
-        Q_ASSERT(false);
-        return nullptr;
-    }
 }
 
 Anchor *AnchorGroup::anchorAtDirection(Anchor::Side side, Qt::Orientation orientation) const
@@ -264,10 +233,6 @@ Anchor::Side AnchorGroup::sideForAnchor(Anchor *a) const
     return Anchor::Side2;
 }
 
-bool AnchorGroup::isStatic() const
-{
-    return top->isStatic() && bottom->isStatic() && left->isStatic() && right->isStatic();
-}
 
 bool AnchorGroup::isStaticOrFollowsStatic() const
 {

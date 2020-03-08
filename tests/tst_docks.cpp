@@ -2756,7 +2756,7 @@ void TestDocks::tst_setFloatingWhenSideBySide()
         QCOMPARE(group.right->position(), staticGroup.right->position());
         QCOMPARE(item2->geometry(), dock2->frame()->geometry());
         layout->checkSanity();
-        QCOMPARE(item2->size(), group.itemSize());
+        QCOMPARE(item2->size(), group.size());
 
         // Cleanup
         dock3->deleteLater();

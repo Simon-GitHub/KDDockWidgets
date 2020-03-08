@@ -44,9 +44,6 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     void addItem(MultiSplitterLayout *);
     void removeItem(Item *item);
 
-    int width() const;
-    int height() const;
-
     ///@brief returns whether this group contains @p anchor
     bool containsAnchor(Anchor *anchor) const;
 
@@ -60,16 +57,6 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
      */
     QSize availableSize() const;
 
-    /**
-     * @brief Returns the size of an item that would be inside these 4 anchors
-     */
-    QSize itemSize() const;
-
-    /**
-     * @brief Similar to @ref itemSize(), but returns the width if @p o is Qt::Vertical, otherwise
-     * the height
-     */
-    int itemSize(Qt::Orientation o) const;
 
     /**
      * @brief Returns whether @ref availableSize is bigger or equal than @ref needed
@@ -79,14 +66,12 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     /// Returns the group formed by the Anchors that actually have items on their outter side
     AnchorGroup outterGroup() const;
 
-    Anchor *oppositeAnchor(Anchor*) const;
     Anchor *createAnchorFrom(KDDockWidgets::Location fromAnchorLocation, Item *relativeTo);
 
     Anchor *adjacentAnchor(Anchor*) const;
 
     QPair<Anchor*,Anchor*> adjacentAnchors(Anchor*) const;
 
-    Anchor *anchor(KDDockWidgets::Location) const;
     Anchor *anchorAtDirection(Anchor::Side side, Qt::Orientation orientation) const;
 
 
@@ -96,19 +81,10 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     const Anchor::List anchors() const;
 
     Anchor::Side sideForAnchor(Anchor*) const;
-    bool isStatic() const;
     bool isStaticOrFollowsStatic() const;
 
     void updateItemSizes();
 
-
-    Anchor *top = nullptr;
-    Anchor *left = nullptr;
-    Anchor *bottom = nullptr;
-    Anchor *right = nullptr;
-    MultiSplitterLayout *layout;
-
-    QDebug debug(QDebug d) const;
 };
 }
 
