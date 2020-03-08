@@ -18,20 +18,9 @@
   along with this program.  If not, see <http://www.gnu.org/licensetases/>.
 */
 
-#ifndef KD_MULTISPLITTER_ANCHORGROUP_P_H
-#define KD_MULTISPLITTER_ANCHORGROUP_P_H
-
-#include "docks_export.h"
-#include "KDDockWidgets.h"
-#include "Anchor_p.h"
-
-#include <QDebug>
 
 namespace KDDockWidgets {
 
-class MultiSplitterLayout;
-class Anchor;
-class Item;
 
 struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
 {

@@ -88,6 +88,11 @@ public:
     QSize minimumSize() const { return m_minSize; }
 
     /**
+     * @brief Returns whether there's non placeholder items.
+     */
+    bool hasVisibleItems() const { return visibleCount() > 0; }
+
+    /**
      * @brief Equivalent to @ref availableLengthForOrientation but returns for both orientations.
      * width is for Qt::Vertical.
      */
@@ -95,6 +100,11 @@ public:
 
     QSize size() const { return m_size; }
     void setSize(QSize);
+
+    /**
+     * @brief sets either the contents height if @p o is Qt::Horizontal, otherwise sets the contents width
+     */
+    void setContentLength(int value, Qt::Orientation o);
 
     /**
      * @brief Removes an item from this MultiSplitter.
@@ -121,6 +131,7 @@ public:
      */
     void addAsPlaceholder(DockWidgetBase *dw, KDDockWidgets::Location location, Item *relativeTo = nullptr);
 
+    // TODO; make private and check if all needed
     enum AnchorSanityOption {
         AnchorSanity_Normal = 0,
         AnchorSanity_Intersections = 1,
@@ -134,7 +145,11 @@ public:
     Q_ENUM(AnchorSanityOption)
     bool checkSanity(AnchorSanityOption o = AnchorSanity_All) { return true; }
 
-    void clear(bool = false);
+    /**
+     * @brief Removes all Items, Anchors and Frames docked in this layout.
+     * DockWidgets are closed but not deleted.
+     */
+    void clear(bool alsoDeleteStaticAnchors = false);
 
     bool isEmpty() const { return m_items.isEmpty(); }
 
@@ -208,12 +223,6 @@ public:
      * Similar to boundPositionForAnchor, but returns both the min and the max width (or height)
      */
     QPair<int, int> boundPositionsForAnchor(Anchor *) const { return {}; }
-
-    /**
-     * @brief sets either the contents height if @p o is Qt::Horizontal, otherwise sets the contents width
-     */
-    void setContentLength(int value, Qt::Orientation o) {}
-
     ///@brief Returns the multisplitter widget
     MultiSplitter* multiSplitter() const;
 
@@ -238,6 +247,14 @@ public:
     void removeAnchor(Anchor *);
 
     QString affinityName() const;
+
+    /**
+     * When this MultiSplitter is resized, it gives or steals the less/extra space evenly through
+     * all widgets.
+     **/
+    void redistributeSpace();
+    void redistributeSpace(QSize oldSize, QSize newSize);
+    void redistributeSpace_recursive(Anchor *fromAnchor, int minAnchorPos);
 
 Q_SIGNALS: // TODO: Check if all used
 
@@ -278,6 +295,9 @@ private:
     // for debugging
     bool validateInputs(QWidgetOrQuick *widget, KDDockWidgets::Location location, const Frame *relativeToFrame, AddingOption option) const;
 
+    /**
+     * @brief returns the Item that holds @p frame in this layout
+     */
     Item *itemForFrame(const Frame *frame) const;
 
     ///@brief a function that all code paths adding Items will call.
@@ -325,10 +345,12 @@ private:
      */
     void setMinimumSize(QSize);
 
+    ///@brief returns whether we're inside setSize();
+    bool isResizing() const { return m_resizing; }
+
     QSize m_size;
     QSize m_minSize;
     Anchor::List m_anchors;
-
     MultiSplitter *const m_multiSplitter;
     Anchor *m_leftAnchor = nullptr;
     Anchor *m_topAnchor = nullptr;
@@ -338,6 +360,7 @@ private:
     AnchorGroup m_staticAnchorGroup;
     bool m_inCtor = false; // TODO: Check if needed
     bool m_inDestructor = false;
+    bool m_resizing = false;
 };
 
 }

@@ -118,26 +118,6 @@ class DOCKS_EXPORT_FOR_UNIT_TESTS MultiSplitterLayout : public QObject // clazy:
     Q_PROPERTY(QSize minimumSize READ minimumSize NOTIFY minimumSizeChanged)
 public:
 
-    /**
-     * @brief Constructor. MultiSplitterLayout is created by MultiSplitter only.
-     */
-    explicit MultiSplitterLayout(MultiSplitter *parent);
-    ~MultiSplitterLayout() override;
-
-    /**
-     * @brief No widget can have a minimum size smaller than this, regardless of their minimum size.
-     */
-    static QSize hardcodedMinimumSize();
-
-    /**
-     * @brief returns the widget that this layout manages
-     */
-    MultiSplitter *multiSplitter() const;
-
-    /**
-     * @brief Adds a widget to this MultiSplitter.
-     */
-    void addWidget(QWidgetOrQuick *widget, KDDockWidgets::Location location, Frame *relativeTo = nullptr, AddingOption option = {});
 
     /**
      * Adds an entire MultiSplitter into this layout. The donor MultiSplitter will be deleted
@@ -155,63 +135,6 @@ public:
     void addAsPlaceholder(DockWidgetBase *dw, KDDockWidgets::Location location, Item *relativeTo = nullptr);
 
     /**
-     * @brief Removes an item from this MultiSplitter.
-     */
-    void removeItem(Item *item);
-
-    /**
-     * @brief Returns the visible Item at pos @p p.
-     */
-    Item *itemAt(QPoint p) const;
-
-    /**
-     * @brief Removes all Items, Anchors and Frames docked in this layout.
-     * DockWidgets are closed but not deleted.
-     */
-    void clear(bool alsoDeleteStaticAnchors = false);
-
-    /**
-     * @brief Returns the number of Item objects in this layout.
-     * This includes non-visible (placeholder) Items too.
-     * @sa visibleCount
-     */
-    int count() const { return m_items.size(); }
-
-    /**
-     * @brief Returns the number of visible Items in this layout.
-     * Which is @ref count minus @ref placeholderCount
-     * @sa count
-     */
-    int visibleCount() const;
-
-    /**
-     * @brief Returns the number of placeholder items in this layout.
-     * This is the same as @ref count minus @ref visibleCount
-     * @sa count, visibleCount
-     */
-    int placeholderCount() const;
-
-    /**
-     * @brief Returns true if count is 0.
-     */
-    bool isEmpty() const { return m_items.isEmpty(); }
-
-    /**
-     * @brief Returns whether there's non placeholder items.
-     */
-    bool hasVisibleItems() const { return visibleCount() > 0; }
-
-    /**
-     * @brief If @p orientation is Qt::Horizontal, returns the height, otherwise the width.
-     */
-    int length(Qt::Orientation orientation) const;
-
-    /**
-     * @brief The list of items in this layout.
-     */
-    const ItemList items() const;
-
-    /**
      * Called by the indicators, so they draw the drop rubber band at the correct place.
      * The rect for the rubberband when dropping a widget at the specified location.
      * Excludes the Anchor thickness, result is actually smaller than what needed. In other words,
@@ -226,92 +149,18 @@ public:
     Anchor *anchorBeingDragged() const { return m_anchorBeingDragged; }
     bool anchorIsBeingDragged() const { return m_anchorBeingDragged != nullptr; }
 
-    ///@brief returns list of separators
-    const Anchor::List anchors() const { return m_anchors; }
-
     /**
      * @brief Returns the list of anchors that are following @p followee
      */
     Anchor::List anchorsFollowing(Anchor *followee) const;
 
-    ///@brief returns the number of anchors that are following others, just for tests.
-    int numAnchorsFollowing() const;
-
-    ///@brief returns the number of anchors that are following others, just for tests.
-    int numVisibleAnchors() const;
 
     ///@brief returns either the left, top, right or bottom separator, depending on the @p type
     Anchor *staticAnchor(Anchor::Type type) const;
 
     Anchor *staticAnchor(Anchor::Side side, Qt::Orientation orientation) const;
 
-    ///@brief a function that all code paths adding Items will call.
-    ///It's mostly for code reuse, so we don't duplicate what's done here. But it's also nice to
-    ///have a central place that we know will be called
-    void addItems_internal(const ItemList &, bool updateConstraints = true, bool emitSignal = true);
 
-    /**
-     * @brief Updates the min size of this layout.
-     */
-    void updateSizeConstraints();
-
-    /**
-     * @brief setter for the contents size
-     * The "contents size" is just the size() of this layout. However, since resizing
-     * QWidgets is async and we need it to be sync. As sometimes adding widgets will increase
-     * the MultiSplitterLayout size (due to widget's min-size constraints).
-     */
-    void setSize(QSize);
-
-    /**
-     * @brief sets either the contents height if @p o is Qt::Horizontal, otherwise sets the contents width
-     */
-    void setContentLength(int value, Qt::Orientation o);
-
-    /**
-     * @brief returns @ref contentsWidth if @p o is Qt::Vertical, otherwise @ref contentsHeight
-     * @sa contentsHeight, contentsWidth
-     */
-    //int length(Qt::Orientation o) const;
-
-    /**
-     * @brief returns the contents width.
-     * Usually it's the same width as the respective parent MultiSplitter.
-     */
-    int width() const { return m_size.width(); }
-
-    /**
-     * @brief returns the contents height.
-     * Usually it's the same height as the respective parent MultiSplitter.
-     */
-    int height() const { return m_size.height(); }
-
-    /**
-     * @brief returns the layout's minimum size
-     * @ref setMinimumSize
-     */
-    QSize minimumSize() const { return m_minSize; }
-
-    /**
-     * @brief getter for the size
-     */
-    QSize size() const { return m_size; }
-
-    // For debug/hardening
-
-    // For debug/hardening
-
-    enum AnchorSanityOption {
-        AnchorSanity_Normal = 0,
-        AnchorSanity_Intersections = 1,
-        AnchorSanity_WidgetMinSizes = 2,
-        AnchorSanity_WidgetInvalidSizes = 4,
-        AnchorSanity_Followers = 8,
-        AnchorSanity_WidgetGeometry = 16,
-        AnchorSanity_Visibility = 32,
-        AnchorSanity_All = AnchorSanity_Intersections | AnchorSanity_WidgetMinSizes | AnchorSanity_WidgetInvalidSizes | AnchorSanity_Followers | AnchorSanity_WidgetGeometry | AnchorSanity_Visibility
-    };
-    Q_ENUM(AnchorSanityOption)
 
     bool checkSanity(AnchorSanityOption o = AnchorSanity_All) const;
     void maybeCheckSanity();
@@ -327,13 +176,6 @@ public:
      * causing a segfault. So what this does is making the unrefing happen a bit earlier.
      */
     void unrefOldPlaceholders(const Frame::List &framesBeingAdded) const;
-
-    // For debug
-    void dumpDebug() const;
-    /**
-     * @brief returns the Item that holds @p frame in this layout
-     */
-    Item *itemForFrame(const Frame *frame) const;
 
     /**
      * @brief returns the frames contained in @p frameOrMultiSplitter
@@ -351,68 +193,6 @@ public:
      * @brief Returns a list of DockWidget objects contained in this layout
      */
     QVector<DockWidgetBase*> dockWidgets() const;
-
-    /**
-     * @brief Creates an AnchorGroup suited for adding a dockwidget to @location relative to @relativeToItem
-     *
-     * Returns the AnchorGroup and a new Anchor, if it was needed.
-     * If relativeTo is null then it returns the static anchor group.
-     */
-    QPair<AnchorGroup, Anchor *> createTargetAnchorGroup(Location location, Item *relativeToItem);
-
-    struct Length {
-        Length() = default;
-        Length(int side1, int side2)
-            : side1Length(side1)
-            , side2Length(side2)
-        {}
-
-        int side1Length = 0;
-        int side2Length = 0;
-        int length() const { return side1Length + side2Length; }
-
-        void setLength(int newLength)
-        {
-            // Sets the new length, preserving proportion
-            side1Length = int(side1Factor() * newLength);
-            side2Length = newLength - side1Length;
-        }
-
-        bool isNull() const
-        {
-            return length() <= 0;
-        }
-
-    private:
-        qreal side1Factor() const
-        {
-            return (1.0 * side1Length) / length();
-        }
-    };
-
-Q_SIGNALS:
-    ///@brief emitted when the number of widgets changes
-    ///@param count the new widget count
-    void widgetCountChanged(int count);
-
-    void visibleWidgetCountChanged(int count);
-
-    ///@brief emitted when a widget is added
-    ///@param item the item containing the new widget
-    void widgetAdded(KDDockWidgets::Item *item);
-
-    ///@brief emitted when a widget is removed
-    ///@param item the item containing the removed widget
-    void widgetRemoved(KDDockWidgets::Item *item);
-
-    ///@brief emitted right before dumping debug
-    ///@sa dumpDebug
-    void aboutToDumpDebug() const; // clazy:exclude=const-signal-or-slot
-
-    ///@brief emitted when the size changes
-    ///@sa size
-    void sizeChanged(QSize sz);
-
 
 public:
     bool eventFilter(QObject *o, QEvent *e) override;
@@ -508,14 +288,6 @@ private:
     QHash<Anchor *, Anchor *> anchorsShouldFollow() const;
 
     /**
-     * When this MultiSplitter is resized, it gives or steals the less/extra space evenly through
-     * all widgets.
-     **/
-    void redistributeSpace();
-    void redistributeSpace(QSize oldSize, QSize newSize);
-    void redistributeSpace_recursive(Anchor *fromAnchor, int minAnchorPos);
-
-    /**
      * Returns the width (if orientation = Horizontal), or height that is occupied by anchors.
      * For example, an horizontal anchor has 2 or 3 px of width, so that's space that can't be
      * occupied by child widgets.
@@ -543,14 +315,11 @@ private:
 
     void ensureItemsMinSize();
 
-    ///@brief returns whether we're inside setSize();
-    bool isResizing() const { return m_resizing; }
     bool isRestoringPlaceholder() const { return m_restoringPlaceholder; }
     bool isAddingItem() const { return m_addingItem; }
 
     bool m_beingMergedIntoAnotherMultiSplitter = false;
     bool m_restoringPlaceholder = false;
-    bool m_resizing = false;
     bool m_addingItem = false;
 
     QPointer<Anchor> m_anchorBeingDragged;

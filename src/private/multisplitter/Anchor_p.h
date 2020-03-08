@@ -86,6 +86,9 @@ class DOCKS_EXPORT_FOR_UNIT_TESTS Anchor : public QObject // clazy:exclude=ctor-
     Q_OBJECT
 
     // properties for GammaRay
+    Q_PROPERTY(Anchor* from READ from WRITE setFrom NOTIFY fromChanged)
+    Q_PROPERTY(Anchor* to READ to WRITE setTo NOTIFY toChanged)
+    Q_PROPERTY(Anchor *followee READ followee NOTIFY followeeChanged)
     Q_PROPERTY(int position READ position WRITE setPosition NOTIFY positionChanged)
     Q_PROPERTY(Qt::Orientation orientation READ orientation CONSTANT)
     Q_PROPERTY(KDDockWidgets::ItemList side1Items READ side1Items NOTIFY itemsChanged)
@@ -114,7 +117,13 @@ public:
         Side1,
         Side2
     };
+
     Q_ENUM(Side)
+    enum class SetPositionOption {
+        None = 0,
+        DontRecalculatePercentage = 1
+    };
+    Q_DECLARE_FLAGS(SetPositionOptions, SetPositionOption)
 
     explicit Anchor(Qt::Orientation orientation, MultiSplitterLayout *layout, Type = Type_None);
     ~Anchor();
@@ -133,6 +142,26 @@ public:
     void removeItem(Item *w);
     void removeItems(Side);
     void removeAllItems();
+    bool isUnneeded() const { return !isStatic() && (!hasItems(Side1) || !hasItems(Side2)); }
+    void consume(Anchor *other);
+    void consume(Anchor *other, Side);
+    void swapItems(Anchor *other);
+
+    /**
+     * A squeeze is a widget's width (or height for horizontal anchors) minus its minimum width.
+     * This function iterates through all widgets of the specified side and returns the minimum
+     * available squeeze.
+     */
+    int smallestAvailableItemSqueeze(Anchor::Side) const;
+
+    /**
+     * Returns how far left or top an anchor can go and still respecting its Side1 widgets min-size.
+     * This function doesn't count with shifting other anchors, for that use MultiSplitterLayout::boundPositionsForAnchor()
+     * which is is recursive and returns the bounds after simulating that intermediary anchors to the left/top were
+     * also resized (each still respecting widgets min sizes though).
+     */
+    int minPosition() const;
+
     /**
      * @brief Returns the last followee in the chain.
      */
@@ -152,8 +181,10 @@ public:
     Anchor *to() const { return m_to; }
     void setTo(Anchor *);
 
-    void setPosition(int);
+    void setPosition(int, Anchor::SetPositionOptions options = SetPositionOption::None);
     int position() const;
+    qreal positionPercentage() const { return m_positionPercentage; }
+
     void commit();
 
     const ItemList items(Side side) const;
@@ -189,6 +220,7 @@ Q_SIGNALS:
     void thicknessChanged();
 
 private:
+    void updatePositionPercentage();
     void debug_updateItemNames();
     QString debug_side1ItemNames() const;
     QString debug_side2ItemNames() const;
@@ -210,6 +242,7 @@ private:
     };
     CumulativeMin cumulativeMinLength_recursive(Anchor::Side side) const;
 
+    qreal m_positionPercentage = 0.0; // Should be between 0 and 1
     QRect m_geometry;
     const Qt::Orientation m_orientation;
     ItemList m_side1Items;

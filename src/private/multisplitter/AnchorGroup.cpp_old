@@ -18,20 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "AnchorGroup_p.h"
-#include "Anchor_p.h"
-#include "MultiSplitterLayout_p.h"
-#include "MultiSplitter_p.h"
-#include "Logging_p.h"
-
-
-using namespace KDDockWidgets;
-
-AnchorGroup::AnchorGroup(MultiSplitterLayout *l)
-    : layout(l)
-{
-}
-
 int AnchorGroup::width() const
 {
     return right->position() - left->position();

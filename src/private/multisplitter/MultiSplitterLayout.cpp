@@ -189,8 +189,25 @@ QRect MultiSplitterLayout::rectForDrop(const QWidget *widgetBeingDropped, Locati
 
 void MultiSplitterLayout::setSize(QSize size)
 {
-    m_size = size;
-    positionStaticAnchors();
+    if (size != m_size) {
+        QScopedValueRollback<bool> resizing(m_resizing, true);
+
+        if (size.width() < m_minSize.width() || size.height() < m_minSize.height()) {
+            qWarning() << Q_FUNC_INFO << "new size is smaller than min size. Size=" << size << "; min=" << m_minSize;
+            return;
+        }
+        const QSize oldSize = m_size;
+        m_size = size;
+        Q_EMIT sizeChanged(size);
+        positionStaticAnchors();
+        redistributeSpace(oldSize, size);
+        m_resizing = false;
+
+        /*
+         if (!m_restoringPlaceholder) { // ensureAnchorsBounded() is run at the end of restorePlaceholder() already.
+            ensureAnchorsBounded(); // TODO
+        }*/
+    }
 }
 
 const AnchorGroup& MultiSplitterLayout::staticAnchorGroup() const
@@ -624,4 +641,75 @@ QString MultiSplitterLayout::affinityName() const
     }
 
     return QString();
+}
+
+void MultiSplitterLayout::redistributeSpace()
+{
+    positionStaticAnchors();
+    redistributeSpace_recursive(m_leftAnchor, 0);
+    redistributeSpace_recursive(m_topAnchor, 0);
+}
+
+void MultiSplitterLayout::redistributeSpace(QSize oldSize, QSize newSize)
+{
+    positionStaticAnchors();
+    if (oldSize == newSize || !oldSize.isValid() || !newSize.isValid())
+        return;
+
+    qCDebug(sizing) << Q_FUNC_INFO << "old=" << oldSize << "; new=" << newSize;
+
+    const bool widthChanged = oldSize.width() != newSize.width();
+    const bool heightChanged = oldSize.height() != newSize.height();
+
+    if (widthChanged)
+        redistributeSpace_recursive(m_leftAnchor, 0);
+    if (heightChanged)
+        redistributeSpace_recursive(m_topAnchor, 0);
+}
+
+void MultiSplitterLayout::redistributeSpace_recursive(Anchor *fromAnchor, int minAnchorPos)
+{
+    for (Item *item : fromAnchor->items(Anchor::Side2)) {
+        Anchor *nextAnchor = item->anchorAtSide(Anchor::Side2, fromAnchor->orientation());
+        if (nextAnchor->isStatic())
+            continue;
+
+        // We use the minPos of the Anchor that had non-placeholder items on its side1.
+        if (nextAnchor->hasNonPlaceholderItems(Anchor::Side1))
+            minAnchorPos = nextAnchor->minPosition();
+
+        if (nextAnchor->hasNonPlaceholderItems(Anchor::Side2) && !nextAnchor->isFollowing()) {
+            const int newPosition = int(nextAnchor->positionPercentage() * length(nextAnchor->orientation()));
+
+            // But don't let the anchor go out of bounds, it must respect its widgets min sizes
+            auto bounds = boundPositionsForAnchor(nextAnchor);
+
+            // For the bounding, use Anchor::minPosition, as we're not making the anchors on the left/top shift, which boundsPositionsForAnchor() assumes.
+            const int newPositionBounded = qMax(bounds.first, qBound(minAnchorPos, newPosition, bounds.second));
+
+            qCDebug(sizing) << Q_FUNC_INFO << nextAnchor << "bounds.first=" << bounds.first
+                            << "; newPosition=" << newPosition
+                            << "; bounds.first=" << bounds.first
+                            << "; bounds.second=" << bounds.second
+                            << "; newPositionBounded=" << newPositionBounded
+                            << "; oldPosition=" << nextAnchor->position()
+                            << "; size=" << m_size
+                            << "; nextAnchor.minPosition=" << minAnchorPos;
+
+            nextAnchor->setPosition(newPositionBounded, Anchor::SetPositionOption::DontRecalculatePercentage);
+        }
+
+        redistributeSpace_recursive(nextAnchor, minAnchorPos);
+    }
+}
+
+void MultiSplitterLayout::setContentLength(int value, Qt::Orientation o)
+{
+    if (o == Qt::Vertical) {
+        // Setting the width
+        setSize({value, m_size.height()});
+    } else {
+        // Setting the height
+        setSize({m_size.width(), value});
+    }
 }

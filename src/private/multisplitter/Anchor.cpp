@@ -316,7 +316,7 @@ void Anchor::setTo(Anchor *to)
     Q_EMIT toChanged();
 }
 
-void Anchor::setPosition(int p)
+void Anchor::setPosition(int p, SetPositionOptions options)
 {
     if (p != position()) {
         if (isVertical()) {
@@ -324,6 +324,17 @@ void Anchor::setPosition(int p)
         } else {
             m_geometry.moveTop(p);
         }
+
+        /**
+         * If we're in the middle of a resize then remember the relative positions, so we can do
+         * a redistribution so that relatively all widgets occupy the same amount
+         */
+        const bool recalculatePercentage = !(options & SetPositionOption::DontRecalculatePercentage) && !m_layout->isResizing();
+        if (recalculatePercentage) {
+            // We keep the percentage, so we don't constantly recalculate it during a resize, which introduces rounding errors
+            updatePositionPercentage();
+        }
+
         Q_EMIT positionChanged(p);
     }
 }
@@ -430,4 +441,80 @@ void Anchor::setThickness()
 
         Q_EMIT thicknessChanged();
     }
+}
+
+void Anchor::consume(Anchor *other)
+{
+    QPointer<Anchor> otherp = other; // Just to check if it wasn't deleted meanwhile. Which doesn't happen, but we silence a clang-tidy warning this way.
+    consume(other, Side1);
+    if (otherp)
+        consume(other, Side2);
+}
+
+void Anchor::consume(Anchor *other, Side side)
+{
+    auto items = other->items(side);
+    other->removeItems(side);
+    addItems(items, side);
+    if (other->isUnneeded()) {
+        // Before deleting an unneeded anchor, we must check if there's anchors following it, and make them follow us instead
+        /*Anchor::List anchorsFollowingOther = m_layout->anchorsFollowing(other);
+        for (Anchor *follower : anchorsFollowingOther) {
+            if (follower != this)
+                follower->setFollowee(this);
+        } TODO*/
+
+        delete other;
+    }
+}
+
+void Anchor::swapItems(Anchor *other)
+{
+    auto other1 = other->m_side1Items;
+    auto other2 = other->m_side2Items;
+    auto my1 = m_side1Items;
+    auto my2 = m_side2Items;
+
+    removeAllItems();
+    other->removeAllItems();
+
+    other->addItems(my1, Side1);
+    other->addItems(my2, Side2);
+    addItems(other1, Side1);
+    addItems(other2, Side1);
+}
+
+void Anchor::updatePositionPercentage()
+{
+    const int layoutLength = m_layout->length(m_orientation);
+    m_positionPercentage = (position() * 1.0) / layoutLength;
+
+    if (position() > layoutLength) {
+        // This warning makes the unit-tests fail if some invalid m_positionPercentage ever appears.
+        // Bug fixed now though.
+        qWarning() << Q_FUNC_INFO << "Weird position percentage" << m_positionPercentage
+                   << position() << layoutLength;
+    }
+}
+
+int Anchor::minPosition() const
+{
+    const int smallestSqueeze = smallestAvailableItemSqueeze(Side1);
+    return position() - smallestSqueeze;
+}
+
+int Anchor::smallestAvailableItemSqueeze(Anchor::Side side) const
+{
+    int smallest = 0;
+    bool firstElement = true;
+    for (Item *item : items(side)) {
+        const int length = item->length(m_orientation);
+        const int minLength = item->minLength(m_orientation);
+        const int availableSqueeze = length - minLength;
+        if (availableSqueeze < smallest || firstElement) {
+            smallest = availableSqueeze;
+            firstElement = false;
+        }
+    }
+    return smallest;
 }
