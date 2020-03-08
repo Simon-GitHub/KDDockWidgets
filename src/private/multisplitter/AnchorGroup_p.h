@@ -36,10 +36,17 @@ class Item;
 struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
 {
 
+    explicit AnchorGroup(MultiSplitterLayout *);
+
     bool isValid() const;
     QSize itemSize() const { return {}; } // TODO: Check if needed
 
     Anchor *anchorAtSide(Anchor::Side side, Qt::Orientation orientation) const;
+    void setAnchor(Anchor *anchor, Location loc);
+    void setAnchor(Anchor *a, Qt::Orientation orientation, Anchor::Side side);
+    Anchor *createAnchorFrom(KDDockWidgets::Location fromAnchorLocation, Item *relativeTo);
+    Anchor *anchor(KDDockWidgets::Location) const;
+    void addItem(Item *item);
 
     Anchor *left = nullptr;
     Anchor *top = nullptr;
@@ -47,6 +54,8 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     Anchor *bottom = nullptr;
 
     QDebug debug(QDebug d) const {}
+
+    MultiSplitterLayout *m_layout = nullptr;
 };
 
 }

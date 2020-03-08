@@ -18,20 +18,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Item_p.h"
-#include "MultiSplitterLayout_p.h"
-#include "MultiSplitter_p.h"
-#include "Logging_p.h"
-#include "AnchorGroup_p.h"
-#include "Frame_p.h"
-#include "DockWidgetBase.h"
-#include "Config.h"
-#include "FrameworkWidgetFactory.h"
-
-#include <qmath.h>
-#include <QEvent>
-
-using namespace KDDockWidgets;
 
 class Item::Private {
 public:
@@ -53,12 +39,6 @@ public:
         , m_frame(nullptr)
         , m_geometry(QRect())
     {
-    }
-
-    QSize frameMinSize() const
-    {
-        return QSize(widgetMinLength(m_frame, Qt::Vertical),
-                     widgetMinLength(m_frame, Qt::Horizontal));
     }
 
     void setFrame(Frame *frame);
@@ -132,33 +112,6 @@ int Item::position(Qt::Orientation orientation) const
 {
     return orientation == Qt::Vertical ? x()
                                        : y();
-}
-
-QSize Item::size() const
-{
-    return d->m_geometry.size();
-}
-
-int Item::width() const
-{
-    return size().width();
-}
-
-int Item::height() const
-{
-    return size().height();
-}
-
-bool Item::isVisible() const
-{
-    Q_ASSERT(d->m_frame);
-    return d->m_frame->isVisible();
-}
-
-void Item::setVisible(bool v)
-{
-    Q_ASSERT(d->m_frame);
-    d->m_frame->setVisible(v);
 }
 
 void Item::setGeometry(QRect geo)
@@ -265,11 +218,6 @@ void Item::endBlockPropagateGeo()
     d->m_blockPropagateGeo = false;
 }
 
-QRect Item::geometry() const
-{
-    return d->m_geometry;
-}
-
 bool Item::eventFilter(QObject *o, QEvent *e)
 {
     if (!d->m_layout)
@@ -286,52 +234,6 @@ bool Item::eventFilter(QObject *o, QEvent *e)
     }
     return false;
 }
-
-Frame *Item::frame() const
-{
-    return d->m_frame;
-}
-
-QWidgetOrQuick *Item::window() const
-{
-    Q_ASSERT(d->m_layout);
-    Q_ASSERT(d->m_layout->multiSplitter());
-    return d->m_layout->multiSplitter()->window();
-}
-
-QWidgetOrQuick *Item::parentWidget() const
-{
-    return d->m_frame ? d->m_frame->parentWidget()
-                      : nullptr;
-}
-
-MultiSplitterLayout *Item::layout() const
-{
-    return d->m_layout;
-}
-
-void Item::setLayout(MultiSplitterLayout *m)
-{
-    Q_ASSERT(m);
-    if (m != d->m_layout) {
-        d->m_layout = m;
-        d->m_anchorGroup.layout = m;
-        setParent(m);
-        if (d->m_frame)
-            d->m_frame->setParent(m->multiSplitter());
-    }
-}
-
-int Item::length(Qt::Orientation orientation) const
-{
-    return KDDockWidgets::widgetLength(this, orientation);
-}
-
-int Item::minLength(Qt::Orientation orientation) const
-{
-    return lengthFromSize(minimumSize(), orientation);
-}
-
 
 Anchor *Item::anchor(const GeometryDiff &geoDiff) const
 {
@@ -379,17 +281,6 @@ bool Item::isPlaceholder() const
 void Item::setIsPlaceholder(bool is)
 {
     d->setIsPlaceholder(is);
-}
-
-bool Item::isInMainWindow() const
-{
-    if (MultiSplitterLayout *l = layout()) {
-        if (MultiSplitter *msw = l->multiSplitter()) {
-            return msw->isInMainWindow();
-        }
-    }
-
-    return false;
 }
 
 void Item::restorePlaceholder(DockWidgetBase *dockWidget, int tabIndex)

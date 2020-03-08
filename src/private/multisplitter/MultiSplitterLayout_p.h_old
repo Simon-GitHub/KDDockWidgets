@@ -517,12 +517,6 @@ private:
      */
     void ensureHasAvailableSize(QSize needed);
 
-    /**
-     * Removes the widgets associated with oldAnchor and gives them to newAnchor.
-     * Called when removing a widget results in unneeded anchors.
-     */
-    void updateAnchorsFromTo(Anchor *oldAnchor, Anchor *newAnchor);
-
     void clearAnchorsFollowing();
     void updateAnchorFollowing(const AnchorGroup &groupBeingRemoved = {});
     QHash<Anchor *, Anchor *> anchorsShouldFollow() const;

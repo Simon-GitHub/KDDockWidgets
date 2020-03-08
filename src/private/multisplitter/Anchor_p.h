@@ -109,16 +109,21 @@ public:
     };
     Q_ENUM(Side)
 
-    explicit Anchor(Qt::Orientation orientation, Type = Type_None);
+    explicit Anchor(Qt::Orientation orientation, MultiSplitterLayout *layout, Type = Type_None);
     bool isStatic() const { return m_type & Type_Static; }
     bool isFollowing() const { return m_followee != nullptr; }
     int thickness() const;
     bool isVertical() const { return m_orientation == Qt::Vertical; }
     bool isEmpty() const { return !hasItems(Side1) && !hasItems(Side2); }
     bool hasItems(Side) const;
-
-    static int thickness(bool staticAnchor);
-
+    bool hasNonPlaceholderItems(Side) const;
+    bool onlyHasPlaceholderItems(Anchor::Side side) const;
+    bool containsItem(const Item *w, Side side) const;
+    void addItem(Item *, Side);
+    void addItems(const ItemList &list, Side);
+    void removeItem(Item *w);
+    void removeItems(Side);
+    void removeAllItems();
     /**
      * @brief Returns the last followee in the chain.
      */
@@ -130,8 +135,10 @@ public:
     Anchor *followee() const { return m_followee; }
 
     Qt::Orientation orientation() const;
+    void setFrom(Anchor *);
     Anchor *from() const { return m_from; }
     Anchor *to() const { return m_to; }
+    void setTo(Anchor *);
 
     void setPosition(int) {}
     int position() const;
@@ -148,7 +155,30 @@ public:
 
     int cumulativeMinLength(Anchor::Side side) const;
 
+    /**
+     * @brief The length of this anchor. The distance between @ref from and @ref to.
+     * @return the anchor's length
+     */
+    int length() const;
+
+    static Anchor *createFrom(Anchor *other, Item *relativeTo = nullptr);
+    static int thickness(bool staticAnchor);
+
+Q_SIGNALS:
+    void positionChanged(int pos);
+    void itemsChanged(Anchor::Side);
+    void fromChanged();
+    void toChanged();
+    void debug_itemNamesChanged();
+    void followeeChanged();
+    void thicknessChanged();
+
 private:
+    void updateSize();
+    QRect geometry() const { return m_geometry; }
+    void setGeometry(QRect);
+
+    friend class AnchorGroup;
 
     struct CumulativeMin {
         int minLength;
@@ -161,11 +191,14 @@ private:
     };
     CumulativeMin cumulativeMinLength_recursive(Anchor::Side side) const;
 
+    QRect m_geometry;
     const Qt::Orientation m_orientation;
     ItemList m_side1Items;
     ItemList m_side2Items;
     const Type m_type;
     Anchor *m_followee = nullptr;
+    MultiSplitterLayout *m_layout = nullptr;
+    Separator *const m_separatorWidget;
     QPointer<Anchor> m_from;// QPointer just so we can assert. They should never be null.
     QPointer<Anchor> m_to;
 };

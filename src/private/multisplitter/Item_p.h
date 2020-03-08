@@ -42,35 +42,49 @@ class DOCKS_EXPORT_FOR_UNIT_TESTS Item : public QObject // clazy:exclude=ctor-mi
 {
     Q_OBJECT
 public:
-
-    explicit Item(MultiSplitterLayout *layout);
+    /// @brief constructs a new layout item to show @p Frame in the layout @layout
+    /// @param frame This is never nullptr.
+    /// @param layout This is never nullptr.
+    explicit Item(Frame *frame, MultiSplitterLayout *layout);
 
     /// @brief Destroys its frame too.
     ~Item() override;
 
+    QWidget *window() const;
     Frame * frame() const; // TODO template
+    QWidget *parentWidget() const;
     void ref();
     void unref();
     int refCount() const; // for tests
+
+    void setLayout(MultiSplitterLayout *w); // TODO: Make the widget children of this one?s
 
     bool isPlaceholder() const { return false; }
     QRect geometry() const;
     QSize minimumSize() const { return QSize(); }
     int length(Qt::Orientation) const;
     int minLength(Qt::Orientation orientation) const;
+    bool isVisible() const;
+    void setVisible(bool);
 
     AnchorGroup& anchorGroup();
     const AnchorGroup& anchorGroup() const;
-
+    MultiSplitterLayout *layout() const;
     int height() const;
     int width() const;
     QSize size() const { return QSize(); }
 
     bool isInMainWindow() const; // TODO: Make main window agnostic
-    QWidget *parentWidget() const; // TODO Check if needed
     void restoreSizes(QSize minSize, QRect geometry) {} // Just for LayoutSaver::restore. // TODO Check if needed
 
     Anchor *anchorAtSide(Anchor::Side side, Qt::Orientation orientation) const;
+
+Q_SIGNALS:
+    void frameChanged();
+    void geometryChanged();
+    void isPlaceholderChanged();
+    void minimumSizeChanged();
+
 private:
     class Private;
     Private *const d;

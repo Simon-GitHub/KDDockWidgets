@@ -65,7 +65,7 @@ public:
 
     const ItemList items() const;
     int count() const { return m_items.size(); }
-    AnchorGroup staticAnchorGroup() const;
+    const AnchorGroup &staticAnchorGroup() const;
     const Anchor::List anchors() const;
     Anchor::List anchors(Qt::Orientation, bool includeStatic = false, bool includePlaceholders = true) const;
     QRect rectForDrop(Length lfd, Location location, QRect relativeToRect) const;
@@ -211,12 +211,36 @@ public:
      */
     void setContentLength(int value, Qt::Orientation o) {}
 
-Q_SIGNALS:
-    void visibleWidgetCountChanged();
+    ///@brief Returns the multisplitter widget
+    MultiSplitter* multiSplitter() const;
+
+Q_SIGNALS: // TODO: Check if all used
 
     ///@brief emitted when the minimumSize changes
     ///@sa minimumSize
     void minimumSizeChanged(QSize);
+
+    ///@brief emitted when the number of widgets changes
+    ///@param count the new widget count
+    void widgetCountChanged(int count);
+
+    void visibleWidgetCountChanged(int count);
+
+    ///@brief emitted when a widget is added
+    ///@param item the item containing the new widget
+    void widgetAdded(KDDockWidgets::Item *item);
+
+    ///@brief emitted when a widget is removed
+    ///@param item the item containing the removed widget
+    void widgetRemoved(KDDockWidgets::Item *item);
+
+    ///@brief emitted right before dumping debug
+    ///@sa dumpDebug
+    void aboutToDumpDebug() const; // clazy:exclude=const-signal-or-slot
+
+    ///@brief emitted when the size changes
+    ///@sa size
+    void sizeChanged(QSize sz);
 private:
 
     // TODO: Review friends
@@ -228,6 +252,33 @@ private:
     friend class LayoutSaver;
 
     Item *itemForFrame(const Frame *frame) const;
+
+    ///@brief a function that all code paths adding Items will call.
+    ///It's mostly for code reuse, so we don't duplicate what's done here. But it's also nice to
+    ///have a central place that we know will be called
+    void addItems_internal(const ItemList &, bool updateConstraints = true, bool emitSignal = true);
+    /**
+     * Removes the widgets associated with oldAnchor and gives them to newAnchor.
+     * Called when removing a widget results in unneeded anchors.
+     */
+    void updateAnchorsFromTo(Anchor *oldAnchor, Anchor *newAnchor);
+
+    AnchorGroup anchorsForPos(QPoint pos) const;
+
+    /**
+     * @brief Returns the visible Item at pos @p p.
+     */
+    Item *itemAt(QPoint p) const;
+
+    Anchor *newAnchor(AnchorGroup &group, KDDockWidgets::Location location);
+
+    /**
+     * @brief Creates an AnchorGroup suited for adding a dockwidget to @location relative to @relativeToItem
+     *
+     * Returns the AnchorGroup and a new Anchor, if it was needed.
+     * If relativeTo is null then it returns the static anchor group.
+     */
+    QPair<AnchorGroup, Anchor *> createTargetAnchorGroup(Location location, Item *relativeToItem);
 
     /**
      * @brief Updates the min size of this layout.
@@ -244,7 +295,7 @@ private:
     QSize m_minSize;
     Anchor::List m_anchors;
 
-    MultiSplitter *const m_multiSplitter; // TODO: Remove ?
+    MultiSplitter *const m_multiSplitter;
     Anchor *const m_leftAnchor = nullptr;
     Anchor *const m_topAnchor = nullptr;
     Anchor *const m_rightAnchor = nullptr;

@@ -15,7 +15,7 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  along with this program.  If not, see <http://www.gnu.org/licensetases/>.
 */
 
 #ifndef KD_MULTISPLITTER_ANCHORGROUP_P_H
@@ -43,7 +43,6 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     void addItem(Item *item);
     void addItem(MultiSplitterLayout *);
     void removeItem(Item *item);
-    bool isValid() const { return top && left && bottom && right; }
 
     int width() const;
     int height() const;
@@ -82,7 +81,6 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
 
     Anchor *oppositeAnchor(Anchor*) const;
     Anchor *createAnchorFrom(KDDockWidgets::Location fromAnchorLocation, Item *relativeTo);
-    void setAnchor(Anchor *a, Qt::Orientation orientation, Anchor::Side side);
 
     Anchor *adjacentAnchor(Anchor*) const;
 
@@ -91,8 +89,6 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     Anchor *anchor(KDDockWidgets::Location) const;
     Anchor *anchorAtDirection(Anchor::Side side, Qt::Orientation orientation) const;
 
-
-    void setAnchor(Anchor *anchor, KDDockWidgets::Location);
 
     bool anchorIsFollowingInwards(Anchor*) const;
     const Anchor::List anchorsFollowingInwards() const;

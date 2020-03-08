@@ -175,12 +175,6 @@ public:
     int smallestAvailableItemSqueeze(Anchor::Side) const;
 
     /**
-     * @brief The length of this anchor. The distance between @ref from and @ref to.
-     * @return the anchor's length
-     */
-    int length() const;
-
-    /**
      * @brief Checks if this anchor is valid. It's valid if @ref from and @ref to are non-null, and not the same.
      * @return true if this anchor is valid.
      */
@@ -309,13 +303,11 @@ Q_SIGNALS:
 
 public:
     int position(QPoint) const;
-    void updateSize();
+
     void updateItemSizes();
     void debug_updateItemNames();
     QString debug_side1ItemNames() const;
     QString debug_side2ItemNames() const;
-    void setGeometry(QRect);
-    QRect geometry() const { return m_geometry; }
 
     const Qt::Orientation m_orientation;
     ItemList m_side1Items;
@@ -340,8 +332,7 @@ public:
 
     QString m_debug_side1ItemNames;
     QString m_debug_side2ItemNames;
-    Separator *const m_separatorWidget;
-    QRect m_geometry;
+
     Anchor *m_followee = nullptr;
     QMetaObject::Connection m_followeeDestroyedConnection;
     const bool m_lazyResize;

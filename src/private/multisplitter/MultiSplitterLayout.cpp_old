@@ -1753,31 +1753,6 @@ int MultiSplitterLayout::length(Qt::Orientation o) const
                              : height();
 }
 
-void MultiSplitterLayout::updateAnchorsFromTo(Anchor *oldAnchor, Anchor *newAnchor)
-{
-    // Update the from/to of other anchors
-    for (Anchor *other : qAsConst(m_anchors)) {
-        Q_ASSERT(other);
-        Q_ASSERT(other->isValid());
-        if (!other->isStatic() && other->orientation() != newAnchor->orientation()) {
-            if (other->to() == oldAnchor) {
-                other->setTo(newAnchor);
-            } else if (other->from() == oldAnchor) {
-                other->setFrom(newAnchor);
-            }
-
-            if (!other->isValid()) {
-                qDebug() << "MultiSplitterLayout::updateAnchorsFromTo: anchor is now invalid."
-                         << "\n    old=" << oldAnchor
-                         << "\n    new=" << newAnchor
-                         << "\n    from=" << other->from()
-                         << "\n    to=" << other->to()
-                         << "\n    other=" << other;
-            }
-        }
-    }
-}
-
 void MultiSplitterLayout::clearAnchorsFollowing()
 {
     for (Anchor *anchor : qAsConst(m_anchors))

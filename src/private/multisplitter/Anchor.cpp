@@ -37,9 +37,11 @@
 
 using namespace KDDockWidgets;
 
-Anchor::Anchor(Qt::Orientation orientation, Anchor::Type type)
+Anchor::Anchor(Qt::Orientation orientation, MultiSplitterLayout *layout, Anchor::Type type)
     : m_orientation(orientation)
     , m_type(type)
+    , m_layout(layout)
+    , m_separatorWidget(Config::self().frameworkWidgetFactory()->createSeparator(this, layout->multiSplitter()))
 {
 
 }
@@ -155,4 +157,185 @@ Anchor::CumulativeMin Anchor::cumulativeMinLength_recursive(Anchor::Side side) c
     }
 
     return result;
+}
+
+bool Anchor::onlyHasPlaceholderItems(Anchor::Side side) const
+{
+    auto &items = side == Side1 ? m_side1Items
+                                : m_side2Items;
+
+    for (Item *item : items) {
+        if (!item->isPlaceholder())
+            return false;
+    }
+
+    return true;
+}
+
+bool Anchor::hasNonPlaceholderItems(Anchor::Side side) const
+{
+    auto &items = side == Side1 ? m_side1Items
+                                : m_side2Items;
+
+    for (Item *item : items) {
+        if (!item->isPlaceholder())
+            return true;
+    }
+
+    return false;
+}
+
+bool Anchor::containsItem(const Item *item, Anchor::Side side) const
+{
+    switch (side) {
+    case Side1:
+        return m_side1Items.contains(const_cast<Item *>(item));
+    case Side2:
+        return m_side2Items.contains(const_cast<Item *>(item));
+    default:
+        Q_ASSERT(false);
+        return false;
+    }
+}
+
+void Anchor::addItem(Item *item, Anchor::Side side)
+{
+    Q_ASSERT(side != Side_None);
+    auto &items = (side == Side1) ? m_side1Items : m_side2Items;
+    if (!items.contains(item)) {
+        items << item;
+        item->anchorGroup().setAnchor(this, orientation(), side);
+        Q_EMIT itemsChanged(side);
+        //updateItemSizes(); TODO
+    }
+}
+
+void Anchor::addItems(const ItemList &list, Side side)
+{
+    for (Item *item : list)
+        addItem(item, side);
+}
+
+void Anchor::removeAllItems()
+{
+    removeItems(Side1);
+    removeItems(Side2);
+}
+
+void Anchor::removeItem(Item *item)
+{
+    if (m_side1Items.removeOne(item)) {
+        item->anchorGroup().setAnchor(nullptr, orientation(), Side1);
+        Q_EMIT itemsChanged(Side1);
+    } else {
+        if (m_side2Items.removeOne(item)) {
+            item->anchorGroup().setAnchor(nullptr, orientation(), Side2);
+            Q_EMIT itemsChanged(Side2);
+        }
+    }
+}
+
+void Anchor::removeItems(Side side)
+{
+    const auto &items = this->items(side);
+    for (Item *item : items)
+        removeItem(item);
+}
+
+/** static */
+Anchor *Anchor::createFrom(Anchor *other, Item *relativeTo)
+{
+    Q_ASSERT(other);
+    auto anchor = new Anchor(other->orientation(), other->m_layout);
+    anchor->setFrom(other->m_from);
+    anchor->setTo(other->m_to);
+
+    if (relativeTo) {
+        if (other->containsItem(relativeTo, Side1)) {
+            other->removeItem(relativeTo);
+            anchor->addItem(relativeTo, Side1);
+        } else if (other->containsItem(relativeTo, Side2)) {
+            other->removeItem(relativeTo);
+            anchor->addItem(relativeTo, Side2);
+        } else {
+            Q_ASSERT(false);
+        }
+    } else {
+        auto other1 = other->m_side1Items;
+        auto other2 = other->m_side2Items;
+        other->removeAllItems();
+        anchor->addItems(other1, Side1);
+        anchor->addItems(other2, Side2);
+    }
+
+    return anchor;
+}
+
+
+void Anchor::setFrom(Anchor *from)
+{
+    if (from->orientation() == orientation() || from == this) {
+        qWarning() << "Anchor::setFrom: Invalid from" << from->orientation() << m_orientation
+                   << from << this;
+        return;
+    }
+
+    if (m_from)
+        disconnect(m_from, &Anchor::positionChanged, this, &Anchor::updateSize);
+    m_from = from;
+    connect(from, &Anchor::positionChanged, this, &Anchor::updateSize);
+    updateSize();
+
+    Q_EMIT fromChanged();
+}
+
+void Anchor::setTo(Anchor *to)
+{
+    Q_ASSERT(to);
+    if (to->orientation() == orientation() || to == this) {
+        qWarning() << "Anchor::setFrom: Invalid to" << to->orientation() << m_orientation
+                   << to << this;
+        return;
+    }
+
+    if (m_to)
+        disconnect(m_to, &Anchor::positionChanged, this, &Anchor::updateSize);
+    m_to = to;
+    connect(to, &Anchor::positionChanged, this, &Anchor::updateSize);
+    updateSize();
+
+    Q_EMIT toChanged();
+}
+
+void Anchor::updateSize()
+{
+    if (isValid()) {
+        if (isVertical()) {
+            setGeometry(QRect(position(), m_from->geometry().bottom() + 1, thickness(), length()));
+        } else {
+            setGeometry(QRect(m_from->geometry().right() + 1, position(), length(), thickness()));
+        }
+    }
+
+    qCDebug(anchors) << "Anchor::updateSize" << this << geometry();
+}
+
+int Anchor::length() const
+{
+    Q_ASSERT(m_to);
+    Q_ASSERT(m_from);
+    return m_to->position() - m_from->position();
+}
+
+void Anchor::setGeometry(QRect r)
+{
+    if (r != m_geometry) {
+
+        if (position() < 0) {
+            qCDebug(anchors) << Q_FUNC_INFO << "Old position was negative" << position() << "; new=" << r;
+        }
+
+        m_geometry = r;
+        m_separatorWidget->setGeometry(r);
+    }
 }

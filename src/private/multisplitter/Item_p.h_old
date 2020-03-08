@@ -116,11 +116,6 @@ public:
     int y() const;
     QPoint pos() const;
     int position(Qt::Orientation) const;
-    QSize size() const;
-    int width() const;
-    int height() const;
-    bool isVisible() const;
-    void setVisible(bool);
 
     void setGeometry(QRect);
     void ensureMinSize(Qt::Orientation orientation, Anchor::Side);
@@ -131,13 +126,6 @@ public:
 
     QRect geometry() const;
     bool eventFilter(QObject *, QEvent *) override;
-
-    Frame* frame() const;
-    QWidgetOrQuick *window() const;
-    QWidgetOrQuick *parentWidget() const;
-
-    MultiSplitterLayout *layout() const;
-    void setLayout(MultiSplitterLayout *w); // TODO: Make the widget children of this one?
 
     /**
      * Returns the width of the widget if orientation is Vertical, the height otherwise.
@@ -171,14 +159,6 @@ public:
      */
     void onLayoutRequest() const;
 
-    void ref();
-    void unref();
-    int refCount() const; // for tests
-Q_SIGNALS:
-    void frameChanged();
-    void geometryChanged();
-    void isPlaceholderChanged();
-    void minimumSizeChanged();
 private:
     friend KDDockWidgets::TestDocks;
     QSize actualMinSize() const; // The min size, regardless if it's a placeholder or not, so we can save the actual value while LayoutSaver::saveLayout

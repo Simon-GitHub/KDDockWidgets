@@ -40,11 +40,17 @@ using namespace KDDockWidgets;
 
 MultiSplitterLayout::MultiSplitterLayout(MultiSplitter *ms)
     : m_multiSplitter(ms)
-    , m_leftAnchor(new Anchor(Qt::Vertical, Anchor::Type_LeftStatic))
-    , m_topAnchor(new Anchor(Qt::Horizontal, Anchor::Type_TopStatic))
-    , m_rightAnchor(new Anchor(Qt::Vertical, Anchor::Type_RightStatic))
-    , m_bottomAnchor(new Anchor(Qt::Horizontal, Anchor::Type_BottomStatic))
+    , m_leftAnchor(new Anchor(Qt::Vertical, this, Anchor::Type_LeftStatic))
+    , m_topAnchor(new Anchor(Qt::Horizontal, this, Anchor::Type_TopStatic))
+    , m_rightAnchor(new Anchor(Qt::Vertical, this, Anchor::Type_RightStatic))
+    , m_bottomAnchor(new Anchor(Qt::Horizontal, this, Anchor::Type_BottomStatic))
+    , m_staticAnchorGroup(this)
 {
+    m_staticAnchorGroup.left = m_leftAnchor;
+    m_staticAnchorGroup.right = m_rightAnchor;
+    m_staticAnchorGroup.top = m_topAnchor;
+    m_staticAnchorGroup.bottom = m_bottomAnchor;
+
     updateSizeConstraints();
 }
 
@@ -151,16 +157,30 @@ void MultiSplitterLayout::setSize(QSize size)
     m_size = size;
 }
 
-AnchorGroup MultiSplitterLayout::staticAnchorGroup() const
+const AnchorGroup& MultiSplitterLayout::staticAnchorGroup() const
 {
     return m_staticAnchorGroup;
 }
 
 void MultiSplitterLayout::addWidget(QWidget *w, Location location, Frame *relativeToWidget, AddingOption option)
 {
-    Anchor *newAnchor = nullptr;
     Item *relativeToItem = itemForFrame(relativeToWidget);
     const QRect dropRect = rectForDrop(w, location, relativeToItem);
+
+    auto result = this->createTargetAnchorGroup(location, relativeToItem);
+    AnchorGroup targetAnchorGroup = result.first;
+    Anchor *newAnchor = result.second;
+
+    auto frame = qobject_cast<Frame*>(w);
+    if (frame) {
+        auto item = new Item(frame, this);
+        targetAnchorGroup.addItem(item);
+        addItems_internal(ItemList{ item });
+    } else {
+        // TODO: Multisplitter drop case
+    }
+
+
 }
 
 void MultiSplitterLayout::addMultiSplitter(MultiSplitter *splitter, Location location, Frame *relativeTo)
@@ -188,6 +208,77 @@ Item *MultiSplitterLayout::itemForFrame(const Frame *frame) const
             return item;
     }
     return nullptr;
+}
+
+QPair<AnchorGroup,Anchor*> MultiSplitterLayout::createTargetAnchorGroup(KDDockWidgets::Location location, Item *relativeToItem)
+{
+    const bool relativeToThis = relativeToItem == nullptr;
+    AnchorGroup group = relativeToThis ? staticAnchorGroup()
+                                       : anchorsForPos(relativeToItem->geometry().center()); // TODO: By pos seems flaky, better use relativeToItem->anchorGroup() ?
+
+    if (!group.isValid()) {
+        qWarning() << Q_FUNC_INFO << "Invalid anchor group:" << &group
+                   << "; staticAnchorGroup=" << &staticAnchorGroup()
+                   << "; relativeTo=" << relativeToItem;
+
+        dumpDebug();
+    }
+
+    Anchor *newAnchor = nullptr;
+    if (relativeToThis) {
+        if (!isEmpty())
+            newAnchor = this->newAnchor(group, location);
+    } else {
+        newAnchor = group.createAnchorFrom(location, relativeToItem);
+        group.setAnchor(newAnchor, KDDockWidgets::oppositeLocation(location));
+    }
+
+    return { group, newAnchor };
+}
+
+Anchor *MultiSplitterLayout::newAnchor(AnchorGroup &group, Location location)
+{
+    qCDebug(::anchors) << "MultiSplitterLayout::newAnchor" << location;
+    Anchor *newAnchor = nullptr;
+    Anchor *donor = nullptr;
+    switch (location) {
+    case Location_OnLeft:
+        donor = group.left;
+        newAnchor = Anchor::createFrom(donor);
+        group.right = newAnchor;
+        break;
+    case Location_OnTop:
+        donor = group.top;
+        newAnchor = Anchor::createFrom(donor);
+        group.bottom = newAnchor;
+        break;
+    case Location_OnRight:
+        donor = group.right;
+        newAnchor = Anchor::createFrom(donor);
+        group.left = newAnchor;
+        break;
+    case Location_OnBottom:
+        donor = group.bottom;
+        newAnchor = Anchor::createFrom(donor);
+        group.top = newAnchor;
+        break;
+    default:
+        qWarning() << "MultiSplitterLayout::newAnchor invalid location!";
+        return nullptr;
+    }
+
+    Q_ASSERT(newAnchor);
+    Q_ASSERT(donor);
+    Q_ASSERT(donor != newAnchor);
+
+    updateAnchorsFromTo(donor, newAnchor);
+
+    qCDebug(::anchors()) << newAnchor->hasNonPlaceholderItems(Anchor::Side1)
+                         << newAnchor->hasNonPlaceholderItems(Anchor::Side2)
+                         << newAnchor->side1Items() << newAnchor->side2Items()
+                         << "; donor" << donor
+                         << "; follows=" << newAnchor->followee();
+    return newAnchor;
 }
 
 void MultiSplitterLayout::updateSizeConstraints()
@@ -232,7 +323,76 @@ void MultiSplitterLayout::dumpDebug() const
 
 }
 
+MultiSplitter *MultiSplitterLayout::multiSplitter() const
+{
+    return m_multiSplitter;
+}
+
 QSize MultiSplitterLayout::availableSize() const
 {
     return {};
+}
+
+Item *MultiSplitterLayout::itemAt(QPoint p) const
+{
+    for (Item *item : m_items) {
+        if (!item->isPlaceholder() && item->geometry().contains(p))
+            return item;
+    }
+
+    return nullptr;
+}
+
+AnchorGroup MultiSplitterLayout::anchorsForPos(QPoint pos) const
+{
+    Item *item = itemAt(pos);
+    if (!item)
+        return AnchorGroup(const_cast<MultiSplitterLayout *>(this));
+
+    return item->anchorGroup();
+}
+
+void MultiSplitterLayout::updateAnchorsFromTo(Anchor *oldAnchor, Anchor *newAnchor)
+{
+    // Update the from/to of other anchors
+    for (Anchor *other : qAsConst(m_anchors)) {
+        Q_ASSERT(other);
+        Q_ASSERT(other->isValid());
+        if (!other->isStatic() && other->orientation() != newAnchor->orientation()) {
+            if (other->to() == oldAnchor) {
+                other->setTo(newAnchor);
+            } else if (other->from() == oldAnchor) {
+                other->setFrom(newAnchor);
+            }
+
+            if (!other->isValid()) {
+                qDebug() << "MultiSplitterLayout::updateAnchorsFromTo: anchor is now invalid."
+                         << "\n    old=" << oldAnchor
+                         << "\n    new=" << newAnchor
+                         << "\n    from=" << other->from()
+                         << "\n    to=" << other->to()
+                         << "\n    other=" << other;
+            }
+        }
+    }
+}
+
+
+void MultiSplitterLayout::addItems_internal(const ItemList &items, bool updateConstraints, bool emitSignal)
+{
+    m_items << items;
+    if (updateConstraints)
+        updateSizeConstraints();
+
+    for (auto item : items) {
+        item->setLayout(this);
+        if (item->frame()) {
+            item->setVisible(true);
+            item->frame()->installEventFilter(this);
+            Q_EMIT widgetAdded(item);
+        }
+    }
+
+    if (emitSignal)
+        Q_EMIT widgetCountChanged(m_items.size());
 }

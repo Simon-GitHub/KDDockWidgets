@@ -187,26 +187,6 @@ Anchor *AnchorGroup::anchorAtDirection(Anchor::Side side, Qt::Orientation orient
     }
 }
 
-void AnchorGroup::setAnchor(Anchor *anchor, Location loc)
-{
-    switch (loc) {
-
-    case KDDockWidgets::Location_OnLeft:
-        left = anchor;
-        break;
-    case KDDockWidgets::Location_OnTop:
-        top = anchor;
-        break;
-    case KDDockWidgets::Location_OnRight:
-        right = anchor;
-        break;
-    case KDDockWidgets::Location_OnBottom:
-        bottom = anchor;
-        break;
-    default:
-        Q_ASSERT(false);
-    }
-}
 
 bool AnchorGroup::anchorIsFollowingInwards(Anchor *anchor) const
 {
@@ -304,21 +284,6 @@ void AnchorGroup::updateItemSizes()
     bottom->updateItemSizes();
 }
 
-void AnchorGroup::setAnchor(Anchor *a, Qt::Orientation orientation, Anchor::Side side)
-{
-    const bool isSide1 = side == Anchor::Side1;
-    if (orientation == Qt::Vertical) {
-        if (isSide1)
-            right = a;
-        else
-            left = a;
-    } else {
-        if (isSide1)
-            bottom = a;
-        else
-            top = a;
-    }
-}
 
 Anchor *AnchorGroup::adjacentAnchor(Anchor *other) const
 {
@@ -343,15 +308,6 @@ QPair<Anchor *, Anchor *> AnchorGroup::adjacentAnchors(Anchor *anchor) const
     } else {
         return {};
     }
-}
-
-void AnchorGroup::addItem(Item *item)
-{
-    // Dropping a single dockwidget, without any nesting
-    left->addItem(item, Anchor::Side2);
-    top->addItem(item, Anchor::Side2);
-    right->addItem(item, Anchor::Side1);
-    bottom->addItem(item, Anchor::Side1);
 }
 
 void AnchorGroup::addItem(MultiSplitterLayout *sourceMultiSplitter)
