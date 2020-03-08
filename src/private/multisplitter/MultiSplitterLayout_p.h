@@ -244,12 +244,12 @@ private:
     QSize m_minSize;
     Anchor::List m_anchors;
 
-    Anchor *m_leftAnchor = nullptr;
-    Anchor *m_topAnchor = nullptr;
-    Anchor *m_rightAnchor = nullptr;
-    Anchor *m_bottomAnchor = nullptr;
-    ItemList m_items;
     MultiSplitter *const m_multiSplitter; // TODO: Remove ?
+    Anchor *const m_leftAnchor = nullptr;
+    Anchor *const m_topAnchor = nullptr;
+    Anchor *const m_rightAnchor = nullptr;
+    Anchor *const m_bottomAnchor = nullptr;
+    ItemList m_items;
     AnchorGroup m_staticAnchorGroup;
 };
 

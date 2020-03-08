@@ -40,6 +40,10 @@ using namespace KDDockWidgets;
 
 MultiSplitterLayout::MultiSplitterLayout(MultiSplitter *ms)
     : m_multiSplitter(ms)
+    , m_leftAnchor(new Anchor(Qt::Vertical, Anchor::Type_LeftStatic))
+    , m_topAnchor(new Anchor(Qt::Horizontal, Anchor::Type_TopStatic))
+    , m_rightAnchor(new Anchor(Qt::Vertical, Anchor::Type_RightStatic))
+    , m_bottomAnchor(new Anchor(Qt::Horizontal, Anchor::Type_BottomStatic))
 {
     updateSizeConstraints();
 }
