@@ -31,49 +31,6 @@ Anchor::Anchor(Qt::Orientation orientation, MultiSplitterLayout *multiSplitter, 
 {
 }
 
-void Anchor::updateItemSizes()
-{
-    if (!m_initialized) {
-        // setPosition() hasn't been called yet, don't bother
-        return;
-    }
-
-    if (LayoutSaver::restoreInProgress()) {
-        // Nothing to do. The LayoutSaver is setting up the whole layout.
-        return;
-    }
-
-    qCDebug(anchors) << Q_FUNC_INFO << this << "; o=" << orientation();
-
-    int position = this->position() + m_positionOffset;
-    for (Item *item : qAsConst(m_side2Items)) {
-        QRect geo = item->geometry();
-
-        const QPoint topLeft = isVertical() ? QPoint(position + thickness(), item->y())
-                                            : QPoint(item->x(), position + thickness());
-
-        geo.setTopLeft(topLeft);
-        if (!item->isPlaceholder())
-            item->setGeometry(geo);
-    }
-
-    position = this->position() - m_positionOffset;
-
-    for (Item *item : qAsConst(m_side1Items)) {
-        QRect geo = item->geometry();
-
-        // -1 as the widget is right next to the anchor, and not on top
-        const QPoint bottomRight = isVertical() ? QPoint(position - 1, geo.bottom())
-                                                : QPoint(geo.right(), position - 1);
-        geo.setBottomRight(bottomRight);
-        if (!item->isPlaceholder()) {
-            item->setGeometry(geo);
-        }
-    }
-}
-
-
-
 void Anchor::ensureBounded()
 {
     // TODO: Probably delete this unused method. It was used in the old days before discovering it
@@ -100,14 +57,6 @@ bool Anchor::isStaticOrFollowsStatic() const
         return true;
 
     return m_followee && m_followee->isStaticOrFollowsStatic();
-}
-
-void Anchor::setPositionOffset(int value)
-{
-    if (value != m_positionOffset) {
-        m_positionOffset = value;
-        updateItemSizes();
-    }
 }
 
 bool Anchor::isBeingDragged() const

@@ -64,6 +64,7 @@ public:
 
     bool isPlaceholder() const { return false; }
     QRect geometry() const;
+    void setGeometry(QRect);
     QSize minimumSize() const;
     int length(Qt::Orientation) const;
     int minLength(Qt::Orientation orientation) const;

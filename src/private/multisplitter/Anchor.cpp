@@ -319,6 +319,7 @@ void Anchor::setTo(Anchor *to)
 void Anchor::setPosition(int p, SetPositionOptions options)
 {
     if (p != position()) {
+        m_initialized = true;
         if (isVertical()) {
             m_geometry.moveLeft(p);
         } else {
@@ -518,3 +519,46 @@ int Anchor::smallestAvailableItemSqueeze(Anchor::Side side) const
     }
     return smallest;
 }
+
+void Anchor::applyGeometryOnItems()
+{
+    if (!m_initialized) {
+        // setPosition() hasn't been called yet, don't bother
+        return;
+    }
+
+    if (LayoutSaver::restoreInProgress()) { // TODO: Check if needed
+        // Nothing to do. The LayoutSaver is setting up the whole layout.
+        return;
+    }
+
+    qCDebug(anchors) << Q_FUNC_INFO << this << "; o=" << orientation();
+
+    int position = this->position();
+    for (Item *item : qAsConst(m_side2Items)) {
+        if (item->isPlaceholder())
+            continue;
+
+        QRect geo = item->geometry();
+        const QPoint topLeft = isVertical() ? QPoint(position + thickness(), item->y())
+                                            : QPoint(item->x(), position + thickness());
+        geo.setTopLeft(topLeft);
+        item->setGeometry(geo);
+    }
+
+    position = this->position();
+
+    for (Item *item : qAsConst(m_side1Items)) {
+        if (item->isPlaceholder())
+            continue;
+
+        QRect geo = item->geometry();
+
+        // -1 as the widget is right next to the anchor, and not on top
+        const QPoint bottomRight = isVertical() ? QPoint(position - 1, geo.bottom())
+                                                : QPoint(geo.right(), position - 1);
+        geo.setBottomRight(bottomRight);
+        item->setGeometry(geo);
+    }
+}
+

@@ -150,6 +150,15 @@ QRect Item::geometry() const
     return d->m_geometry;
 }
 
+void Item::setGeometry(QRect geo)
+{
+    Q_ASSERT(d->m_frame || isPlaceholder());
+    if (d->m_geometry != geo) {
+        d->m_geometry = geo;
+        Q_EMIT geometryChanged();
+    }
+}
+
 int Item::length(Qt::Orientation orientation) const
 {
     return KDDockWidgets::widgetLength(this, orientation);

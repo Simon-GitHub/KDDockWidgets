@@ -339,6 +339,8 @@ private:
 
     void commit();
 
+    void applyGeometryOnItems();
+
     /**
      * @brief setter for the minimum size
      * @ref minimumSize

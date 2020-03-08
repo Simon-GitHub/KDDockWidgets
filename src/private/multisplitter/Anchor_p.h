@@ -207,6 +207,8 @@ public:
 
     Separator *separatorWidget() const;
 
+    void applyGeometryOnItems();
+
     static Anchor *createFrom(Anchor *other, Item *relativeTo = nullptr);
     static int thickness(bool staticAnchor);
 
@@ -255,6 +257,7 @@ private:
     QPointer<Anchor> m_to;
     QString m_debug_side1ItemNames;
     QString m_debug_side2ItemNames;
+    bool m_initialized = false;
 };
 
 }

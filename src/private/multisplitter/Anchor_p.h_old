@@ -135,18 +135,13 @@ Q_SIGNALS:
 public:
     int position(QPoint) const;
 
-    void updateItemSizes();
-
     // Only set when anchor is moved through mouse. Side1 if going towards left or top, Side2 otherwise.
     Side m_lastMoveDirection = Side_None;
 
     bool m_showingSide1Rubberband = false;
     bool m_showingSide2Rubberband = false;
-    bool m_initialized = false;
-    static bool s_isResizing;
 
-    // For when being animated. They are not displayed at their pos, but with an offset.
-    int m_positionOffset = 0;
+    static bool s_isResizing;
 
     QMetaObject::Connection m_followeeDestroyedConnection;
     const bool m_lazyResize;

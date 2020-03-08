@@ -645,9 +645,13 @@ QString MultiSplitterLayout::affinityName() const
 
 void MultiSplitterLayout::redistributeSpace()
 {
+    // TODO: Check if this function is needed
+
     positionStaticAnchors();
     redistributeSpace_recursive(m_leftAnchor, 0);
     redistributeSpace_recursive(m_topAnchor, 0);
+    applyGeometryOnItems();
+    commit();
 }
 
 void MultiSplitterLayout::redistributeSpace(QSize oldSize, QSize newSize)
@@ -665,6 +669,17 @@ void MultiSplitterLayout::redistributeSpace(QSize oldSize, QSize newSize)
         redistributeSpace_recursive(m_leftAnchor, 0);
     if (heightChanged)
         redistributeSpace_recursive(m_topAnchor, 0);
+
+    applyGeometryOnItems();
+    commit();
+}
+
+void MultiSplitterLayout::applyGeometryOnItems()
+{
+    for (Anchor *anchor : qAsConst(m_anchors)) {
+        if (!anchor->isFollowing())
+            anchor->applyGeometryOnItems();
+    }
 }
 
 void MultiSplitterLayout::redistributeSpace_recursive(Anchor *fromAnchor, int minAnchorPos)
