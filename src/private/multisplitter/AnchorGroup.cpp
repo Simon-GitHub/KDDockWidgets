@@ -176,3 +176,65 @@ bool AnchorGroup::isStatic() const
 {
     return top->isStatic() && bottom->isStatic() && left->isStatic() && right->isStatic();
 }
+
+void AnchorGroup::addItem(MultiSplitterLayout *sourceLayout)
+{
+    // Here we rip all the widgets and anchors from the source multisplitter into the receiving multisplitter
+    // preserving the layout between source widgets. Then we delete the source splitter, as all its
+    // content has bene integrated into ours
+
+    // To prevent the source splitter from deleting the anchors once the widgets are reparented
+    sourceLayout->m_beingMergedIntoAnotherMultiSplitter = true;
+
+    // Reparent the widgets:
+    for (Item *sourceItem : sourceLayout->items()) {
+        sourceItem->setLayout(m_layout);
+        sourceItem->setVisible(true);
+    }
+
+    // Reparent the inner anchors, they're ours now
+    for (Anchor *anchor : sourceLayout->anchors()) {
+        if (!anchor->isStatic()) {
+            const qreal positionPercentage = anchor->positionPercentage();
+            anchor->setLayout(m_layout);
+
+            if (anchor->from()->isStatic()) {
+                if (anchor->isVertical()) {
+                    anchor->setFrom(top);
+                } else {
+                    anchor->setFrom(left);
+                }
+            }
+
+            if (anchor->to()->isStatic()) {
+                if (anchor->isVertical()) {
+                    anchor->setTo(bottom);
+                } else {
+                    anchor->setTo(right);
+                }
+            }
+
+            // And update their position
+
+            qreal newPos = 0;
+            if (anchor->isVertical()) {
+                newPos = left->position() + (width() * positionPercentage);
+            } else {
+                newPos = top->position() + (height() * positionPercentage);
+            }
+
+            const QPair<int,int> bounds = m_layout->boundPositionsForAnchor(anchor);
+            anchor->setPosition(qBound(bounds.first, static_cast<int>(newPos), bounds.second));
+        }
+    }
+
+    AnchorGroup sourceAnchorGroup = sourceLayout->staticAnchorGroup();
+
+    Q_ASSERT(sourceAnchorGroup.isValid());
+    top->consume(sourceAnchorGroup.top);
+    bottom->consume(sourceAnchorGroup.bottom);
+    left->consume(sourceAnchorGroup.left);
+    right->consume(sourceAnchorGroup.right);
+
+    delete sourceLayout->multiSplitter(); // Delete MultiSplitter and MultiSplitterLayout
+}

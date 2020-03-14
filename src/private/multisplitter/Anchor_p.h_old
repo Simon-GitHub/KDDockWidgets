@@ -40,12 +40,6 @@ public:
     void ensureBounded();
 
     /**
-     * @brief Sets the new layout. Called when we're dropping a source layout into a target one.
-     * The target one will steal the separators of the source one.
-     */
-    void setLayout(MultiSplitterLayout *);
-
-    /**
      * @brief Returns whether this Anchor should follow another one. That happens if one of it's side is empty or only has placeholders
      * Also, it can't be a static anchor.
      */

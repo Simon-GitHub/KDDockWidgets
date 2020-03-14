@@ -122,7 +122,7 @@ public:
      * if widgetFoo was at the left of widgetBar when in the donor splitter, then it will still be at left
      * of widgetBar when the whole splitter is dropped into this one.
      */
-    void addMultiSplitter(MultiSplitter *splitter, KDDockWidgets::Location location,
+    void addMultiSplitter(MultiSplitter *sourceMultiSplitter, KDDockWidgets::Location location,
                           Frame *relativeTo = nullptr);
 
 
@@ -363,6 +363,7 @@ private:
     bool m_inCtor = false; // TODO: Check if needed
     bool m_inDestructor = false;
     bool m_resizing = false;
+    bool m_beingMergedIntoAnotherMultiSplitter = false;
 };
 
 }

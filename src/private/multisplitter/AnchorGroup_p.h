@@ -55,6 +55,7 @@ struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
     Anchor *anchor(KDDockWidgets::Location) const;
     Anchor *oppositeAnchor(Anchor *a) const;
     void addItem(Item *item);
+    void addItem(MultiSplitterLayout *);
 
     bool isStatic() const;
 

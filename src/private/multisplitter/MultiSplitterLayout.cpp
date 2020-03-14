@@ -269,32 +269,53 @@ bool MultiSplitterLayout::validateInputs(QWidgetOrQuick *widget,
 
 void MultiSplitterLayout::addWidget(QWidget *w, Location location, Frame *relativeToWidget, AddingOption option)
 {
+    auto frame = qobject_cast<Frame*>(w);
+    qCDebug(addwidget) << Q_FUNC_INFO << w
+                       << "; location=" << locationStr(location)
+                       << "; relativeTo=" << relativeToWidget
+                       << "; size=" << size()
+                       << "; w.size=" << w->size()
+                       << "; w.min=" << KDDockWidgets::widgetMinLength(w, anchorOrientationForLocation(location))
+                       << "; frame=" << frame
+                       << "; option=" << option;
+
     // Make some sanity checks:
     if (!validateInputs(w, location, relativeToWidget, option))
         return;
 
     Item *relativeToItem = itemForFrame(relativeToWidget);
+    if (option & AddingOption_StartHidden) {
+        addAsPlaceholder(qobject_cast<DockWidgetBase*>(w), location, relativeToItem);
+        return;
+    }
+
     const QRect dropRect = rectForDrop(w, location, relativeToItem);
 
     auto result = this->createTargetAnchorGroup(location, relativeToItem);
     AnchorGroup targetAnchorGroup = result.first;
     Anchor *newAnchor = result.second;
 
-    auto frame = qobject_cast<Frame*>(w);
     if (frame) {
         auto item = new Item(frame, this);
         targetAnchorGroup.addItem(item);
         addItems_internal(ItemList{ item });
+    } else if (auto sourceMultiSplitter = qobject_cast<MultiSplitter*>(w)) {
+        // This is the case of dropping another MultiSplitter into this one
+        // Like when dragging a floating window with a nested layout into this one.
+        auto sourceMultiSplitterLayout = sourceMultiSplitter->multiSplitterLayout();
+        auto items = sourceMultiSplitterLayout->items();
+        targetAnchorGroup.addItem(sourceMultiSplitterLayout);
+        addItems_internal(items);
     } else {
-        // TODO: Multisplitter drop case
+        // Shouldn't happen
+        Q_ASSERT(false);
     }
-
-
 }
 
-void MultiSplitterLayout::addMultiSplitter(MultiSplitter *splitter, Location location, Frame *relativeTo)
+void MultiSplitterLayout::addMultiSplitter(MultiSplitter *sourceMultiSplitter, Location location, Frame *relativeTo)
 {
-
+    qCDebug(addwidget) << Q_FUNC_INFO << sourceMultiSplitter << location << relativeTo;
+    addWidget(sourceMultiSplitter, location, relativeTo);
 }
 
 void MultiSplitterLayout::addAsPlaceholder(DockWidgetBase *dw, Location location, Item *relativeTo)

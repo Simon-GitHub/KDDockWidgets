@@ -24,13 +24,6 @@ namespace KDDockWidgets {
 
 struct DOCKS_EXPORT_FOR_UNIT_TESTS AnchorGroup
 {
-    ///@brief contructs an invalid group
-    AnchorGroup() = default;
-
-    explicit AnchorGroup(MultiSplitterLayout *);
-
-    void addItem(Item *item);
-    void addItem(MultiSplitterLayout *);
     void removeItem(Item *item);
 
     ///@brief returns whether this group contains @p anchor

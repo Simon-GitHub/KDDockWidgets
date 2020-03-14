@@ -451,14 +451,6 @@ void MultiSplitterLayout::ensureItemsMinSize()
     }
 }
 
-void MultiSplitterLayout::addMultiSplitter(MultiSplitter *sourceMultiSplitter,
-                                           Location location,
-                                           Frame *relativeTo)
-{
-    qCDebug(addwidget) << Q_FUNC_INFO << sourceMultiSplitter << location << relativeTo;
-    addWidget(sourceMultiSplitter, location, relativeTo);
-}
-
 void MultiSplitterLayout::removeItem(Item *item)
 {
     if (!item || m_inDestructor || !m_items.contains(item))

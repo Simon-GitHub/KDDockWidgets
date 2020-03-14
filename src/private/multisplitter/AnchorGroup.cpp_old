@@ -261,69 +261,6 @@ QPair<Anchor *, Anchor *> AnchorGroup::adjacentAnchors(Anchor *anchor) const
     }
 }
 
-void AnchorGroup::addItem(MultiSplitterLayout *sourceMultiSplitter)
-{
-    // Here we rip all the widgets and anchors from the source multisplitter into the receiving multisplitter
-    // preserving the layout between source widgets. Then we delete the source splitter, as all its
-    // content has bene integrated into ours
-
-    // To prevent the source splitter from deleting the anchors once the widgets are reparented
-    sourceMultiSplitter->m_beingMergedIntoAnotherMultiSplitter = true;
-
-    // Reparent the widgets:
-    for (Item *sourceItem : sourceMultiSplitter->items()) {
-        sourceItem->setLayout(layout);
-        sourceItem->setVisible(true);
-    }
-
-    // Reparent the inner anchors, they're ours now
-    for (Anchor *anchor : sourceMultiSplitter->anchors()) {
-        if (!anchor->isStatic()) {
-            const qreal positionPercentage = anchor->positionPercentage();
-            anchor->setLayout(layout);
-            anchor->setVisible(true);
-
-            if (anchor->from()->isStatic()) {
-                if (anchor->isVertical()) {
-                    anchor->setFrom(top);
-                } else {
-                    anchor->setFrom(left);
-                }
-            }
-
-            if (anchor->to()->isStatic()) {
-                if (anchor->isVertical()) {
-                    anchor->setTo(bottom);
-                } else {
-                    anchor->setTo(right);
-                }
-            }
-
-            // And update their position
-
-            qreal newPos = 0;
-            if (anchor->isVertical()) {
-                newPos = left->position() + (width() * positionPercentage);
-            } else {
-                newPos = top->position() + (height() * positionPercentage);
-            }
-
-            const QPair<int,int> bounds = layout->boundPositionsForAnchor(anchor);
-            anchor->setPosition(qBound(bounds.first, static_cast<int>(newPos), bounds.second));
-        }
-    }
-
-    AnchorGroup sourceAnchorGroup = sourceMultiSplitter->staticAnchorGroup();
-
-    Q_ASSERT(sourceAnchorGroup.isValid());
-    top->consume(sourceAnchorGroup.top);
-    bottom->consume(sourceAnchorGroup.bottom);
-    left->consume(sourceAnchorGroup.left);
-    right->consume(sourceAnchorGroup.right);
-
-    delete sourceMultiSplitter->multiSplitter(); // Delete MultiSplitter and MultiSplitterLayout
-}
-
 void AnchorGroup::removeItem(Item *item)
 {
     left->removeItem(item);

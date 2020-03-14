@@ -562,3 +562,12 @@ void Anchor::applyGeometryOnItems()
     }
 }
 
+void Anchor::setLayout(MultiSplitterLayout *layout)
+{
+    m_layout->removeAnchor(this);
+    m_layout = layout;
+    setParent(layout->multiSplitter());
+    m_separatorWidget->setParent(layout->multiSplitter());
+    m_layout->insertAnchor(this);
+    // m_layout->setAnchorBeingDragged(nullptr); TODO: Check if needed
+}

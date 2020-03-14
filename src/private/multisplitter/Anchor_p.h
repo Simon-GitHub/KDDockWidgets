@@ -147,6 +147,13 @@ public:
     void consume(Anchor *other, Side);
     void swapItems(Anchor *other);
 
+
+    /**
+     * @brief Sets the new layout. Called when we're dropping a source layout into a target one.
+     * The target one will steal the separators of the source one.
+     */
+    void setLayout(MultiSplitterLayout *);
+
     /**
      * A squeeze is a widget's width (or height for horizontal anchors) minus its minimum width.
      * This function iterates through all widgets of the specified side and returns the minimum
