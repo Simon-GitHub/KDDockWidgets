@@ -290,7 +290,6 @@ void MultiSplitterLayout::addWidget(QWidget *w, Location location, Frame *relati
     }
 
     const QRect dropRect = rectForDrop(w, location, relativeToItem);
-
     auto result = this->createTargetAnchorGroup(location, relativeToItem);
     AnchorGroup targetAnchorGroup = result.first;
     Anchor *newAnchor = result.second;
@@ -298,6 +297,7 @@ void MultiSplitterLayout::addWidget(QWidget *w, Location location, Frame *relati
     if (frame) {
         auto item = new Item(frame, this);
         targetAnchorGroup.addItem(item);
+        item->setPendingGrowth();
         addItems_internal(ItemList{ item });
     } else if (auto sourceMultiSplitter = qobject_cast<MultiSplitter*>(w)) {
         // This is the case of dropping another MultiSplitter into this one

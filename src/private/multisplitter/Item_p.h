@@ -38,6 +38,18 @@ namespace KDDockWidgets {
 class Frame;
 class AnchorGroup;
 
+struct PendingGrowth
+{
+    int left = 0;
+    int top = 0;
+    int bottom = 0;
+    int right = 0;
+
+    bool isValid() const {
+        return left > 0 && top > 0 && bottom > 0 && right > 0;
+    }
+};
+
 class DOCKS_EXPORT_FOR_UNIT_TESTS Item : public QObject // clazy:exclude=ctor-missing-parent-argument
 {
     Q_OBJECT
@@ -75,6 +87,9 @@ public:
     int y() const;
     QPoint pos() const;
     int position(Qt::Orientation) const;
+
+    void setPendingGrowth(PendingGrowth);
+    bool hasPendingGrowth() const;
 
     AnchorGroup& anchorGroup();
     const AnchorGroup& anchorGroup() const;

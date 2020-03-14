@@ -72,14 +72,7 @@ std::pair<int,int> MultiSplitterLayout::boundInterval(int newPos1, Anchor* ancho
 void MultiSplitterLayout::addWidget(QWidgetOrQuick *w, Location location, Frame *relativeToWidget, AddingOption option)
 {
     auto frame = qobject_cast<Frame*>(w);
-    qCDebug(addwidget) << Q_FUNC_INFO << w
-                       << "; location=" << locationStr(location)
-                       << "; relativeTo=" << relativeToWidget
-                       << "; size=" << size()
-                       << "; w.size=" << w->size()
-                       << "; w.min=" << KDDockWidgets::widgetMinLength(w, anchorOrientationForLocation(location))
-                       << "; frame=" << frame
-                       << "; option=" << option;
+
 
     if (itemForFrame(frame) != nullptr) {
         // Item already exists, remove it.

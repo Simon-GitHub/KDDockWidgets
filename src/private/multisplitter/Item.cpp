@@ -63,6 +63,7 @@ public:
     bool m_destroying = false;
     bool m_isPlaceholder = false;
     int m_refCount = 0;
+    PendingGrowth m_pendingGrowth;
 };
 
 void Item::Private::setMinimumSize(QSize sz)
@@ -307,6 +308,16 @@ QPoint Item::pos() const
 int Item::position(Qt::Orientation orientation) const
 {
     return orientation == Qt::Vertical ? x() : y();
+}
+
+void Item::setPendingGrowth(PendingGrowth growth)
+{
+    d->m_pendingGrowth = growth;
+}
+
+bool Item::hasPendingGrowth() const
+{
+    return d->m_pendingGrowth.isValid();
 }
 
 QSize Item::minimumSize() const

@@ -350,6 +350,8 @@ private:
     ///@brief returns whether we're inside setSize();
     bool isResizing() const { return m_resizing; }
 
+    PendingGrowth calculatePendingGrowth(Item *) const;
+
     QSize m_size;
     QSize m_minSize;
     Anchor::List m_anchors;

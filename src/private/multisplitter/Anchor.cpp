@@ -493,8 +493,8 @@ void Anchor::updatePositionPercentage()
     if (position() > layoutLength) {
         // This warning makes the unit-tests fail if some invalid m_positionPercentage ever appears.
         // Bug fixed now though.
-        qWarning() << Q_FUNC_INFO << "Weird position percentage" << m_positionPercentage
-                   << position() << layoutLength;
+        qWarning() << Q_FUNC_INFO << "Weird position percentage=" << m_positionPercentage
+                   << "; pos=" << position() << "; layout.length=" << layoutLength;
     }
 }
 
